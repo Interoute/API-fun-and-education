@@ -1,4 +1,4 @@
-API-fun-and-education
-=====================
+API programming for fun and education: Programs from the Interoute blog series
+==============================================================================
 
-Programs used in the Interoute blog series "API programming for fun and education"
+This repository contains the programs developed in a series of blog posts about using the API programming interface of the Interoute Virtual Data Centre.
