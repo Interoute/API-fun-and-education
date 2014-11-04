@@ -3,7 +3,7 @@
 #   Name: widget-cpu-graphs.py
 #   Purpose: GUI widget to display graphs of CPU loads on VMs in a VDC
 #   Requires: class VDCApiCall in the file vdc_api_call.py
-#       [https://gist.github.com/InterouteGIST/aff2f957b7f0d766fab9]
+# Use the repo: https://github.com/Interoute/API-fun-and-education
 
 # Copyright (C) Interoute Communications Limited, 2014
 
@@ -15,8 +15,7 @@
 # (1) Create a configuration file '.vdcapi' for access to the VDC API according to the instructions at
 # http://cloudstore.interoute.com/main/knowledge-centre/library/vdc-api-introduction-api
 # (2) Put this file and the file vdc_api_call.py in any location
-# (3) You can run this file using the command 'python widget-cpu-graphs.py'
-
+# (3) You can run this file using the command 'python widget-cpu-graphs.py&'
 
 import matplotlib
 matplotlib.use('TkAgg') 
@@ -37,21 +36,19 @@ from collections import deque
 class Application(Frame):
     def plot_update(self):
         test=self.update_cpu_data()
-        if not(test): # API connection was not made to get fresh data
+        if not(test): # test = 0 so API connection was not made to get fresh data
             print("%s: ERROR in plot_update: No API connection or No data returned" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M")))
             self.a.text(min(0.0,-self.plot_interval*(self.plot_points-1)/2.0),0.5,"ERROR: No API connection")
             self.fig.canvas.draw()
             self.after(self.plot_interval*1000,self.plot_update)
             return
 
-        self.fig.clf() #clear the plot
-        self.a = self.fig.add_subplot(111)
+        self.fig.clf() #clear the current plot
+        self.a = self.fig.add_subplot(111) #create a new plot
 
-        vm_names = map(lambda x: x[0],self.cpuData[0])
-        ##### REMOVE FROM PUBLIC CODE
-        vm_names = vm_names[-5:] # SELECT FEW VMs TO SIMPLIFY SAMPLE OUTPUT
-        #####
-        data = sum(self.cpuData,[]) #this flattens the data structure
+        vm_names = map(lambda x: x[0],self.cpuData[0]) #create a list of VM names
+        #the data to be plotted - this line flattens the data structure (ie. removes a level of list brackets) 
+        data = sum(self.cpuData,[]) 
         current_time = data[-1][1][0]
 
         self.a.set_xlim([-self.plot_interval*(self.plot_points-1),0])
@@ -119,7 +116,6 @@ class Application(Frame):
         # Create the api access object
         self.api = vdc.VDCApiCall(api_url, apiKey, secret)
 
-
         self.plot_interval = 10 
         self.plot_points = 100
 
@@ -138,11 +134,8 @@ class Application(Frame):
         self.pack()
         self.createWidgets()
 
-
-
 root = Tk()
 root.title("VM CPU Load Graph widget")
 app = Application(master=root)
-##root.after(10000,app.plot_update) # start the auto-updating (delay time in milliseconds)
 app.mainloop()
 root.destroy()
