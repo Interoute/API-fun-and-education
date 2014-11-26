@@ -2,7 +2,7 @@
 # Python script for the Interoute Virtual Data Centre API:
 #   Name: widget-big-red-button-v3.py
 #   Purpose: Uses physical buttons to turn a virtual machine on and off
-#   Requires: Raspberry Pi Model B
+#   Requires: Raspberry Pi Model B or B+
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 
 # Copyright (C) Interoute Communications Limited, 2014
@@ -13,7 +13,10 @@
 # http://cloudstore.interoute.com/main/knowledge-centre/library/vdc-api-introduction-api
 # (2) Put this file and the file vdc_api_call.py in any location
 
-# The GPIO library for Raspberry Pi may require installation (it is included in recent versions of Raspbian)
+# The RPi.GPIO library for Raspberry Pi may require installation. If not, it is recommended to do an 
+# update of Raspbian.
+
+# Emergency Stop Button should on ON (UP) at program start
 
 import vdc_api_call as vdc
 import json
@@ -44,10 +47,7 @@ class MainWindow(Frame):
 
         # INITIALISE THE GUI
         self.vmSelectedNumber= 0
-        self.emergencyButtonState = True # Button should on ON (UP) at start
-
         self.pack({"fill":"both"})
-
         self.createWidgets()
 
     def emergencyMsg(self):
@@ -91,11 +91,11 @@ class MainWindow(Frame):
     def get_vm_info(self):
         #this method performs the API call 'listVirtualMachines'
         request={}
-        checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
+        ##checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
         try:
             result = self.api.listVirtualMachines(request)
 	    ##print result
-            testdict = result['virtualmachine'][0] #???this should throw exception if dictionary lookup fails
+            testdict = result['virtualmachine'][0] #this should throw exception if dictionary lookup fails
         except:
             return "***************************\nError: Cannot make connection with API\n***************************"
 
@@ -119,7 +119,7 @@ class MainWindow(Frame):
            #Turn both LED off
            GPIO.output(23,GPIO.LOW)
            GPIO.output(24,GPIO.LOW)
-           buttonMessage="BUTTONS ARE NON-OPERATIONAL"        
+           buttonMessage="BUTTONS ARE NON-OPERATIONAL"
 
         return "Your selected VM is:\n[%d/%d]'%s'\nCurrent status: %s\n%s" % (self.vmSelectedNumber+1,self.vmCount,self.vm['name'],self.vm['state'],buttonMessage)
 
@@ -127,7 +127,7 @@ class MainWindow(Frame):
         #this method is called when the 'QUIT' button is pressed
         GPIO.cleanup()
         root.quit()
-
+        
     def redButtonPressed(self,channel):
         print "test: RED BUTTON PRESSED!!"
         if self.vm['state']=='Running':
