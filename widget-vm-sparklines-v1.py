@@ -62,11 +62,14 @@ class Application(Frame):
             vmcounter = vmcounter + 1
             if vm['state'] == 'Running':
                data_per_vm = [d[1] for d in data if d[0]==vm['name']]
-               self.vmStatesText.insert('end',"\n  [%2d] %s  |%s|" % (vmcounter,vm['name'],sparkline.sparkify([d[1] for d in data_per_vm])), ('stateRunning'))
+               self.vmStatesText.insert('end',"\n  [%2d] %s  |%s|" % (vmcounter,vm['name'],
+                 sparkline.sparkify([d[1] for d in data_per_vm])), ('stateRunning'))
             elif vm['state'] == 'Stopped':
-               self.vmStatesText.insert('end',"\n  [%2d] %s  (%s)" % (vmcounter,vm['name'],vm['state']), ('stateStopped'))
+               self.vmStatesText.insert('end',"\n  [%2d] %s  (%s)" % (vmcounter,vm['name'],vm['state']), 
+                 ('stateStopped'))
             else:
-               self.vmStatesText.insert('end',"\n  [%2d] %s  (%s)" % (vmcounter,vm['name'],vm['state']), ('stateOther'))
+               self.vmStatesText.insert('end',"\n  [%2d] %s  (%s)" % (vmcounter,vm['name'],vm['state']), 
+                 ('stateOther'))
         #set callback to this method after plot_interval seconds
         self.vmStatesText.after(self.plot_interval*1000, self.vmStates_update)
 
