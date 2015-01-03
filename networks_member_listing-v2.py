@@ -3,10 +3,9 @@
 #   Name: networks_member_listing.py
 #   Purpose: List the networks in a VDC with the VMs belonging to each network
 #   Requires: class VDCApiCall in the file vdc_api_call.py
-# For download and information: 
-#   https://github.com/Interoute/API-fun-and-education
+# See the repo: https://github.com/Interoute/API-fun-and-education   
 #
-# Copyright (C) Interoute Communications Limited, 2014
+# Copyright (C) Interoute Communications Limited, 2015
 
 from __future__ import print_function
 import vdc_api_call as vdc
