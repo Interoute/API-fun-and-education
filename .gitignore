@@ -3,4 +3,6 @@
 *#
 *.pyc
 *.diag
+VDC-network-data*png
+test*.png
 data.png

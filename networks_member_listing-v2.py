@@ -7,6 +7,11 @@
 #
 # Copyright (C) Interoute Communications Limited, 2015
 
+#TO DO: COMMAND LINE OPTIONS FOR:
+#  region
+#  Output diag file
+#
+
 from __future__ import print_function
 import vdc_api_call as vdc
 import getpass
@@ -41,7 +46,8 @@ if __name__ == '__main__':
     api = vdc.VDCApiCall(api_url, apiKey, secret)
 
     #API calls to get the information about networks and VMs
-    request = {}
+    vdcRegion = 'Europe'
+    request = {'region': vdcRegion}
     networksList = api.listNetworks(request)
     vmList = api.listVirtualMachines(request)
     portForwardingRulesList = api.listPortForwardingRules(request)
@@ -52,12 +58,13 @@ if __name__ == '__main__':
         diagfile = open('VDC-network-data.diag','w')
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
         diagfile.write('nwdiag {\n')
-        print("\nNetwork configuration for the account '%s' checked at %s:" % (vmList['virtualmachine'][0]['account'],checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
+        print("\nNetwork configuration for the account '%s' in VDC region '%s' checked at %s:" 
+            % (vmList['virtualmachine'][0]['account'],vdcRegion,checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
         for network in networksList['network']:
-            print(" "+unichr(0x2015)+' \'%s\' (CIDR: %s, Zone: %s' % (
+            print(" "+unichr(0x2015)+' \'%s\' (Zone: %s, CIDR: %s' % (
                 network['name'],
-                network['cidr'],
-                network['zonename']
+                network['zonename'],
+                network['cidr']
             ), end='')
             #FIND EXTERNAL IP ADDRESS IF EXISTS
             testdict=request
