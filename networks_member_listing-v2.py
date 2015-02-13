@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # Python script for the Interoute Virtual Data Centre API:
-#   Name: networks_member_listing.py
+#   Name: networks_member_listing-v2.py
 #   Purpose: List the networks in a VDC with the VMs belonging to each network
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 # See the repo: https://github.com/Interoute/API-fun-and-education   
@@ -84,7 +84,7 @@ if __name__ == '__main__':
                         members.append([int(vm['nic'][i]['ipaddress'].split('.')[-1]),vm['nic'][i]['ipaddress'],vm['name'],vm['id']])
                         break # Can break out of this loop as soon as the network id is found for a NIC 
             if len(members)>0:
-                #For nwdiag, network name has zone city appended (this is necessary because default VDC zone names are same in all zones
+                #For nwdiag, network name has zone city appended (this is necessary because default VDC network names are same in all zones
                 diagfile.write('network %s_Z_%s {\n address=\"%s\"\n' % (str(network['name']).translate(nameStringSubs),
                        network['zonename'].split()[0], network['cidr']))
                 if external_IP != {}:
@@ -125,5 +125,5 @@ if __name__ == '__main__':
                 
     except KeyError:
         # if no network, " networksList['network'] " will raise exception
-        # but any other failure of API calls will also raise this exception!
+        # but any other failure of API calls will also raise this exception!?
         print('Nothing to do: No networks found')
