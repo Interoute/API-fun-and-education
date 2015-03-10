@@ -3,7 +3,10 @@
 #   Name: networks_member_listing-v2.py
 #   Purpose: List the networks in a VDC with the VMs belonging to each network
 #   Requires: class VDCApiCall in the file vdc_api_call.py
-# See the repo: https://github.com/Interoute/API-fun-and-education   
+# See the repo: https://github.com/Interoute/API-fun-and-education
+#
+# You can pass options via the command line: type 'python networks_member_listing-v2.py -h'
+# for usage information
 #
 # Copyright (C) Interoute Communications Limited, 2015
 
@@ -17,7 +20,7 @@ import datetime
 import argparse
 
 if __name__ == '__main__':
-    # Parse command line arguments
+    # STEP 1: Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
                     help="path/name of the config file to be used for the API URL and API keys")
@@ -29,7 +32,7 @@ if __name__ == '__main__':
     diagfileName = parser.parse_args().diagfile
     config_file = parser.parse_args().config
 
-    # If config file is found, read its content,
+    # STEP 2: If config file is found, read its content,
     # else query user for the URL, API key, Secret key
     if os.path.isfile(config_file):
         with open(config_file) as fh:
@@ -45,18 +48,17 @@ if __name__ == '__main__':
         apiKey = raw_input()
         secret = getpass.getpass(prompt='API secret:')
 
-    # Create the api access object
+    # STEP 3: Create the api access object
     api = vdc.VDCApiCall(api_url, apiKey, secret)
 
-    #API calls to get the information about networks and VMs
+    # STEP 4: API calls to get the information about networks and VMs
     request = {'region': vdcRegion}
     networksList = api.listNetworks(request)
     vmList = api.listVirtualMachines(request)
     portForwardingRulesList = api.listPortForwardingRules(request)
-                        
 
+    # STEP 5: Process the information from the API calls
     nameStringSubs = string.maketrans(" -","__")
-
     try:
         diagfile = open(diagfileName, 'w')
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
@@ -84,7 +86,8 @@ if __name__ == '__main__':
                         members.append([int(vm['nic'][i]['ipaddress'].split('.')[-1]),vm['nic'][i]['ipaddress'],vm['name'],vm['id']])
                         break # Can break out of this loop as soon as the network id is found for a NIC 
             if len(members)>0:
-                #For nwdiag, network name has zone city appended (this is helpful because default VDC network names are same in all zones
+                #For nwdiag, network name has zone city appended
+                #(this is helpful because default VDC network names are same in all zones)
                 diagfile.write('network %s_Z_%s {\n address=\"%s\"\n' % (str(network['name']).translate(nameStringSubs),
                        network['zonename'].split()[0], network['cidr']))
                 if external_IP != {}:
