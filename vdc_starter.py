@@ -14,11 +14,20 @@ import getpass
 import json
 import os
 from pprint import pprint
-
+import argparse
 
 if __name__ == '__main__':
-    cloudinit_scripts_dir = 'cloudinit-scripts'
-    config_file = os.path.join(os.path.expanduser('~'), '.vdcapi')
+    # Parse command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
+                    help="path/name of the config file to be used for the API URL and API keys")
+    parser.add_argument("-r", "--region", choices=['Europe','europe','USA','usa','Asia','asia'],
+                    default='Europe', help="specify the VDC region (Europe, USA or Asia)")
+    vdcRegion = parser.parse_args().region
+    config_file = parser.parse_args().config
+    
+    # If config file is found, read its content,
+    # else query user for the URL, API key, Secret key
     if os.path.isfile(config_file):
         with open(config_file) as fh:
             data = fh.read()
@@ -26,10 +35,6 @@ if __name__ == '__main__':
             api_url = config['api_url']
             apiKey = config['api_key']
             secret = config['api_secret']
-            try:
-                cloudinit_scripts_dir = config['cloudinit_scripts_dir']
-            except KeyError:
-                pass
     else:
         print('API url (e.g. http://10.220.18.115:8080/client/api):', end='')
         api_url = raw_input()

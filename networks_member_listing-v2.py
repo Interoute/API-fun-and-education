@@ -84,7 +84,7 @@ if __name__ == '__main__':
                         members.append([int(vm['nic'][i]['ipaddress'].split('.')[-1]),vm['nic'][i]['ipaddress'],vm['name'],vm['id']])
                         break # Can break out of this loop as soon as the network id is found for a NIC 
             if len(members)>0:
-                #For nwdiag, network name has zone city appended (this is necessary because default VDC network names are same in all zones
+                #For nwdiag, network name has zone city appended (this is helpful because default VDC network names are same in all zones
                 diagfile.write('network %s_Z_%s {\n address=\"%s\"\n' % (str(network['name']).translate(nameStringSubs),
                        network['zonename'].split()[0], network['cidr']))
                 if external_IP != {}:
