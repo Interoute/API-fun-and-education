@@ -18,6 +18,7 @@ import os
 import string
 import datetime
 import argparse
+import re
 
 if __name__ == '__main__':
     # STEP 1: Parse command line arguments
@@ -28,9 +29,11 @@ if __name__ == '__main__':
                     default='Europe', help="specify the VDC region (Europe, USA or Asia)")
     parser.add_argument("-f", "--diagfile", default='VDC-network-data.diag',
                     help="name of the output diag file for use with nwdiag")
+    parser.add_argument("-z", "--zone",help="filter results by zone name (match by initial characters) ")
     vdcRegion = parser.parse_args().region
     diagfileName = parser.parse_args().diagfile
     config_file = parser.parse_args().config
+    zonenameFilter = parser.parse_args().zone
 
     # STEP 2: If config file is found, read its content,
     # else query user for the URL, API key, Secret key
@@ -57,6 +60,9 @@ if __name__ == '__main__':
     vmList = api.listVirtualMachines(request)
     portForwardingRulesList = api.listPortForwardingRules(request)
 
+    if zonenameFilter:
+       networksList['network'] = [network for network in networksList['network'] if re.search('\A'+zonenameFilter,network['zonename'])]
+
     # STEP 5: Process the information from the API calls
     nameStringSubs = string.maketrans(" -","__")
     try:
@@ -65,6 +71,8 @@ if __name__ == '__main__':
         diagfile.write('nwdiag {\n internet [shape=cloud]\n VDC [shape=cloud] \n internet -- VDC\n')
         print("\nNetwork configuration for the account '%s' in VDC region '%s' checked at %s:" 
             % (vmList['virtualmachine'][0]['account'],vdcRegion,checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
+        if zonenameFilter:
+           print("***Results filtered for zone name(s) starting with '%s'" % (zonenameFilter))
         for network in networksList['network']:
             print(" "+unichr(0x2015)+' \'%s\' (Zone: %s, CIDR: %s' % (
                 network['name'],
