@@ -2,12 +2,11 @@
 # Python class to simplify access to the Interoute Virtual Data Centre API
 # Original code by Kelcey Damage & Kraig Amador, 2012
 # Developed for Interoute.com by Sandy Walker, 2014
-# For download and information: 
-# http://cloudstore.interoute.com/main/knowledge-centre/library/vdc-api-python-scripts
+# For download and information: https://github.com/Interoute/API-fun-and-education
 
 # This program is configured for Python version 2.6/2.7 
 #
-# Copyright (C) Interoute Communications Limited, 2014
+# Copyright (C) Interoute Communications Limited, 2015
 
 from __future__ import print_function
 import base64
@@ -118,5 +117,7 @@ class VDCApiCall(object):
         args['command'] = command
         data = self.request(args)
         # The response is of the format {commandresponse: actual-data}
-        key = command.lower() + "response"
-        return json.loads(data)[key]
+        ##key = command.lower() + "response"
+        ##  Temporary change due to incompatible behaviour of the new network commands
+        ##return json.loads(data)[key]
+        return json.loads(data).values()[0]
