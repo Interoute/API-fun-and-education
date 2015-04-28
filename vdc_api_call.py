@@ -64,7 +64,8 @@ class VDCApiCall(object):
         request_data += "&signature=%s" % sig
 
         try:
-            connection = urllib2.urlopen(self.api_url, request_data)
+            connection = urllib2.urlopen(self.api_url + "?" + request_data ) # GET request
+            ##connection = urllib2.urlopen(self.api_url, request_data) # POST request
             response = connection.read()
         except urllib2.HTTPError as error:
             print('HTTP Error: %s' % error.code)
