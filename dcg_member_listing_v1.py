@@ -25,13 +25,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
                     help="path/name of the config file to be used for the API URL and API keys")
-    parser.add_argument("-n", "--netmem",help="show the VM members of private direct connect networks")
     ##parser.add_argument("-f", "--diagfile", default='VDC-network-data.diag',
     ##                help="name of the output diag file for use with nwdiag")
     ##parser.add_argument("-z", "--zone",help="filter results by zone name (match by initial characters) ")
     ##diagfileName = parser.parse_args().diagfile
     config_file = parser.parse_args().config
-    ##show_netmem = True
     ##zonenameFilter = parser.parse_args().zone
 
 
@@ -58,17 +56,17 @@ if __name__ == '__main__':
     vdcRegions = ['Europe', 'USA', 'Asia']
     dcgList = api.listDirectConnectGroups({})
     networksLists = {}
-    ##if show_netmem:
-    ##   vmLists = {}
     for r in vdcRegions:
        networksLists[r] = api.listNetworks({'region': r, 'subtype': 'privatedirectconnect'})
+
+    ##if zonenameFilter:
+    ##   networksList['network'] = [network for network in networksList['network'] if re.search('\A'+zonenameFilter,network['zonename'])]
 
     # STEP 5: Process the information from the API calls
     try:
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
         print("\nDirect Connect Groups for the account '%s' checked at %s:"
-            % (networksLists['Europe']['network'][0]['domain'], checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
-        ##print("\nDirect Connect Groups checked at %s:" % (checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
+             % (networksLists['Europe']['network'][0]['domain'], checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
         for d in dcgList['directconnectgroups']:
             print(" "+unichr(0x2015)+' \'%s\' (dcgid: %s)' % (
                 d['name'],
@@ -76,11 +74,9 @@ if __name__ == '__main__':
             ))
             members = []
             for r in vdcRegions:
-               ##if show_netmem:
-               ##   vmLists[r] = api.listVirtualMachines({'region':r})        
                for n in networksLists[r]['network']:
                   if n['dcgfriendlyname'] == d['name']:
-                     members.append([n['cidr'],n['name'],n['zonename'],r,n['id']])
+                     members.append([n['cidr'],n['name'],n['zonename'],r])
             if len(members)>0:
                 members = sorted(members, key=lambda x: x[2])
                 for i in range(len(members)):
@@ -88,8 +84,6 @@ if __name__ == '__main__':
                        print("   "+unichr(0x2514)+" %s: '%s' (%s, %s)" % (members[i][0],members[i][1],members[i][2],members[i][3]))
                     else:
                        print("   "+unichr(0x251C)+" %s: '%s' (%s, %s)" % (members[i][0],members[i][1],members[i][2],members[i][3]))
-                       ##if show_netmem:
-
                 print(" ")
             else:
                 print("   *(NO MEMBERS)")
