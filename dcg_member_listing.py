@@ -82,7 +82,8 @@ if __name__ == '__main__':
                   if n['dcgfriendlyname'] == d['name']:
                      members.append([n['cidr'],n['name'],n['zonename'],r,n['id']])
             if len(members)>0:
-                members = sorted(members, key=lambda x: x[2])
+                members = sorted(members, key=lambda x: x[2]) #sort by zonename
+                members = sorted(members, key=lambda x: x[3]) #sort by region
                 for i in range(len(members)):
                     if i==len(members)-1:  #if this is last item in list
                        print("   "+unichr(0x2514)+" %s: '%s' (%s, %s)" % (members[i][0],members[i][1],members[i][2],members[i][3]))
@@ -92,7 +93,7 @@ if __name__ == '__main__':
 
                 print(" ")
             else:
-                print("   *(NO MEMBERS)")
+                print("   *(NO NETWORKS)")
             print(" ")
 
     except KeyError:
