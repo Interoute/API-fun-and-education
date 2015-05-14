@@ -81,6 +81,7 @@ if __name__ == '__main__':
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
         print("\nDirect Connect Groups for the account '%s' checked at %s:"
             % (networksLists['Europe']['network'][0]['domain'], checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
+        print("\n** Output will not be correct for DCGs and networks that were not created with NetworkAPI functions because\n** these are missing the information in the listNetworks call which identifies the DCG membership of the network\n") 
         for d in dcgList['directconnectgroups']:
             print(" "+unichr(0x2015)+' \'%s\' (dcgid: %s)' % (
                 d['name'],
