@@ -22,7 +22,7 @@ import re
 
 def print_network_members(vmList,networkid,prefixChars):
    networkmembers = []
-   for vm in vmList['virtualmachine']:
+   for vm in vmList:
       for i in range(len(vm['nic'])):
          if networkid == vm['nic'][i]['networkid']:
             networkmembers.append([int(vm['nic'][i]['ipaddress'].split('.')[-1]),vm['nic'][i]['ipaddress'],vm['name'],vm['id']])
@@ -75,6 +75,14 @@ if __name__ == '__main__':
        vmLists = {}
     for r in vdcRegions:
        networksLists[r] = api.listNetworks({'region': r, 'subtype': 'privatedirectconnect'})
+       if show_netmem:
+          zonesResponse = api.listZones({'region':r})
+          ##zonesList = [[z['id'],z['name']] for z in zonesResponse['zone']]
+          zonesList = [z['name'] for z in zonesResponse['zone']]
+          vmRawList = api.listVirtualMachines({'region':r}) 
+          for z in zonesList:
+              ##vmLists[z[1]] = api.listVirtualMachines({'region':r,'zoneid':z[0]}) 
+              vmLists[z] = [v for v in vmRawList['virtualmachine'] if v['zonename']==z]
 
     # STEP 5: Process the information from the API calls
     try:
@@ -89,11 +97,6 @@ if __name__ == '__main__':
             ))
             members = []
             for r in vdcRegions:
-               if show_netmem:
-                  zonesResponse = api.listZones({'region':r})
-                  zonesList = [[z['id'],z['name']] for z in zonesResponse['zone']]
-                  for z in zonesList:
-                     vmLists[z[1]] = api.listVirtualMachines({'region':r,'zoneid':z[0]})        
                for n in networksLists[r]['network']:
                   if n['dcgfriendlyname'] == d['name']:
                      members.append([n['cidr'],n['name'],n['zonename'],r,n['id']])
