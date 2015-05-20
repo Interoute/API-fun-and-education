@@ -77,11 +77,9 @@ if __name__ == '__main__':
        networksLists[r] = api.listNetworks({'region': r, 'subtype': 'privatedirectconnect'})
        if show_netmem:
           zonesResponse = api.listZones({'region':r})
-          ##zonesList = [[z['id'],z['name']] for z in zonesResponse['zone']]
           zonesList = [z['name'] for z in zonesResponse['zone']]
           vmRawList = api.listVirtualMachines({'region':r}) 
           for z in zonesList:
-              ##vmLists[z[1]] = api.listVirtualMachines({'region':r,'zoneid':z[0]}) 
               vmLists[z] = [v for v in vmRawList['virtualmachine'] if v['zonename']==z]
 
     # STEP 5: Process the information from the API calls

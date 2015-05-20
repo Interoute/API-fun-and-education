@@ -56,9 +56,22 @@ if __name__ == '__main__':
 
     # STEP 4: API calls to get the information about networks and VMs
     request = {'region': vdcRegion}
-    networksList = api.listNetworks(request)
-    vmList = api.listVirtualMachines(request)
-    portForwardingRulesList = api.listPortForwardingRules(request)
+    try:
+       networksList = api.listNetworks(request)
+    except KeyError:
+       print("Error: No networks found", file=sys.stderr)
+    try: 
+       vmList = api.listVirtualMachines(request)
+    except KeyError:
+       print("Note: No VMs found for this account", file=sys.stderr)
+       vmList = {}
+       pass 
+    try:
+       portForwardingRulesList = api.listPortForwardingRules(request)
+    except KeyError:
+       print("Note: No port-forwarding rules found for this account")
+       portForwardingRulesList = {}
+       pass 
 
     if zonenameFilter:
        networksList['network'] = [network for network in networksList['network'] if re.search('\A'+zonenameFilter,network['zonename'])]
@@ -70,7 +83,7 @@ if __name__ == '__main__':
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
         diagfile.write('nwdiag {\n internet [shape=cloud]\n VDC [shape=cloud] \n internet -- VDC\n')
         print("\nNetwork configuration for the account '%s' in VDC region '%s' checked at %s:" 
-            % (vmList['virtualmachine'][0]['account'],vdcRegion,checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
+            % (networksList['network'][0]['domain'],vdcRegion,checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
         if zonenameFilter:
            print("***Results filtered for zone name(s) starting with '%s'" % (zonenameFilter))
         for network in networksList['network']:
@@ -88,11 +101,12 @@ if __name__ == '__main__':
             else:
                print(")")
             members = []
-            for vm in vmList['virtualmachine']:
-                for i in range(len(vm['nic'])):
-                    if network['id'] == vm['nic'][i]['networkid']:
-                        members.append([int(vm['nic'][i]['ipaddress'].split('.')[-1]),vm['nic'][i]['ipaddress'],vm['name'],vm['id']])
-                        break # Can break out of this loop as soon as the network id is found for a NIC 
+            if vmList != {}:
+               for vm in vmList['virtualmachine']:
+                   for i in range(len(vm['nic'])):
+                       if network['id'] == vm['nic'][i]['networkid']:
+                           members.append([int(vm['nic'][i]['ipaddress'].split('.')[-1]),vm['nic'][i]['ipaddress'],vm['name'],vm['id']])
+                           break # Can break out of this loop as soon as the network id is found for a NIC 
             if len(members)>0:
                 #For nwdiag, network name has zone city appended
                 #(this is helpful because default VDC network names are same in all zones)
@@ -136,5 +150,5 @@ if __name__ == '__main__':
                 
     except KeyError:
         # if no network, " networksList['network'] " will raise exception
-        # but any other failure of API calls will also raise this exception!?
+        # but other failures of API calls will also raise this exception!?
         print('Nothing to do: No networks found')
