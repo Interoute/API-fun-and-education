@@ -87,30 +87,32 @@ if __name__ == '__main__':
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
         print("\nDirect Connect Groups for the account '%s' checked at %s:"
             % (networksLists['Europe']['network'][0]['domain'], checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
-        print("\n** Output will not be correct for DCGs and networks that were not created with NetworkAPI functions because\n** these are missing the information in the listNetworks call which identifies the DCG membership of the network\n") 
+        print("\n** Networks which have 'isprovisioned' set to False are labelled with '/NotProv/' and are not functional")
+        print("** Output will not be correct for DCGs and networks that were not created with NetworkAPI functions because\n** these are missing the information in the listNetworks call which identifies the DCG membership of the network\n") 
         for d in dcgList['directconnectgroups']:
-            print(" "+unichr(0x2015)+' \'%s\' (dcgid: %s)' % (
-                d['name'],
-                d['id']
-            ))
+            print(" "+unichr(0x2015)+' \'%s\' (dcgid: %s)' % (d['name'], d['id']))
             members = []
             for r in vdcRegions:
                for n in networksLists[r]['network']:
                   if n['dcgfriendlyname'] == d['name']:
-                     members.append([n['cidr'],n['name'],n['zonename'],r,n['id']])
+                     members.append([n['cidr'],n['name'],n['zonename'],r,n['id'],n['isprovisioned']])
             if len(members)>0:
                 members = sorted(members, key=lambda x: x[2]) #sort by zonename
                 members = sorted(members, key=lambda x: x[3]) #sort by region
                 for i in range(len(members)):
+                    if members[i][5]:
+                       provisionedState = ""
+                    else:
+                       provisionedState = "/NotProv/ "
                     if i==len(members)-1:  #if this is last item in list
-                       print("   "+unichr(0x2514)+" %s: '%s' (%s, %s)" % (members[i][0],members[i][1],members[i][2],members[i][3]))
+                       print("   "+unichr(0x2514)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedState,members[i][1],members[i][2],members[i][3]))
                        if show_netmem:
                            if vmLists[members[i][2]] != {}:
                               print_network_members(vmLists[members[i][2]],members[i][4],"        ")
                            else:
                               print("        " + "*(NO MEMBERS)")
                     else:
-                       print("   "+unichr(0x251C)+" %s: '%s' (%s, %s)" % (members[i][0],members[i][1],members[i][2],members[i][3]))
+                       print("   "+unichr(0x251C)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedState,members[i][1],members[i][2],members[i][3]))
                        if show_netmem:
                            if vmLists[members[i][2]] != {}:
                               print_network_members(vmLists[members[i][2]],members[i][4],"   "+unichr(0x2502)+"    ")
