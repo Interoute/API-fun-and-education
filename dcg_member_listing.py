@@ -20,7 +20,7 @@ import datetime
 import argparse
 import re
 
-def print_network_members(vmList,networkid,prefixChars):
+def print_network_members(vmList,networkid,isProvisioned,prefixChars):
    networkmembers = []
    for vm in vmList:
       for i in range(len(vm['nic'])):
@@ -35,7 +35,10 @@ def print_network_members(vmList,networkid,prefixChars):
          else:
             print(prefixChars + unichr(0x251C)+" %s: '%s'" % (networkmembers[i][1],networkmembers[i][2]))
    else:
-      print(prefixChars + "*(NO MEMBERS)")
+      if isProvisioned:
+         print(prefixChars + "*(NO MEMBERS)")
+      else:
+         print(prefixChars + "*(NOT PROVISIONED)")
 
 
 if __name__ == '__main__':
@@ -101,24 +104,23 @@ if __name__ == '__main__':
                 members = sorted(members, key=lambda x: x[3]) #sort by region
                 for i in range(len(members)):
                     if members[i][5]:
-                       provisionedState = ""
+                       provisionedLabel = ""
                     else:
-                       provisionedState = "/NotProv/ "
+                       provisionedLabel = "/NotProv/ "
                     if i==len(members)-1:  #if this is last item in list
-                       print("   "+unichr(0x2514)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedState,members[i][1],members[i][2],members[i][3]))
+                       print("   "+unichr(0x2514)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][2],members[i][3]))
                        if show_netmem:
                            if vmLists[members[i][2]] != {}:
-                              print_network_members(vmLists[members[i][2]],members[i][4],"        ")
+                              print_network_members(vmLists[members[i][2]],members[i][4],members[i][5],"        ")
                            else:
                               print("        " + "*(NO MEMBERS)")
                     else:
-                       print("   "+unichr(0x251C)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedState,members[i][1],members[i][2],members[i][3]))
+                       print("   "+unichr(0x251C)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][2],members[i][3]))
                        if show_netmem:
                            if vmLists[members[i][2]] != {}:
-                              print_network_members(vmLists[members[i][2]],members[i][4],"   "+unichr(0x2502)+"    ")
+                              print_network_members(vmLists[members[i][2]],members[i][4],members[i][5],"   "+unichr(0x2502)+"    ")
                            else:
-                              print("   " + unichr(0x2502) + "    " + "*(NO MEMBERS)")
-
+                              print("        " + "*(NO MEMBERS)")
                 print(" ")
             else:
                 print("   *(NO NETWORKS)")
