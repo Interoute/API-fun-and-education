@@ -87,11 +87,20 @@ if __name__ == '__main__':
         if zonenameFilter:
            print("***Results filtered for zone name(s) starting with '%s'" % (zonenameFilter))
         for network in networksList['network']:
-            print(" "+unichr(0x2015)+' \'%s\' (Zone: %s, CIDR: %s' % (
-                network['name'],
-                network['zonename'],
-                network['cidr']
-            ), end='')
+            if network['name'] != network['displaytext']:
+               print(" "+unichr(0x2015)+' \'%s\'|\'%s\' (Zone: %s, CIDR: %s' % (
+                  network['name'],
+                  network['displaytext'],
+                  network['zonename'],
+                  network['cidr']
+                ), end='')
+            else:
+                print(" "+unichr(0x2015)+' \'%s\' (Zone: %s, CIDR: %s' % (
+                  network['name'],
+                  network['zonename'],
+                  network['cidr']
+                ), end='')
+               
             #FIND EXTERNAL IP ADDRESS IF EXISTS
             testdict=request
             testdict['associatednetworkid']=network['id']
