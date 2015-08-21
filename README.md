@@ -1,6 +1,6 @@
 API programming for fun and education: Programs from the Interoute CloudStore blogs
 ===================================================================================
 
-This repository contains programs described in blog posts written by Phillip Kent about using the API programming interface of the [Interoute Virtual Data Centre](http://cloudstore.interoute.com/main/WhatInterouteVDC):
+This repository contains programs used and described in blog posts written by Phillip Kent about [Interoute Virtual Data Centre](https://cloudstore.interoute.com/what_is_vdc) and using the API programming interface.
 
-http://cloudstore.interoute.com/main/blogs/PhillipKent
+Index of blog posts: http://cloudstore.interoute.com/blogs/PhillipKent

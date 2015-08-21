@@ -29,11 +29,13 @@ if __name__ == '__main__':
                     default='Europe', help="specify the VDC region (Europe, USA or Asia)")
     parser.add_argument("-f", "--diagfile", default='VDC-network-data.diag',
                     help="name of the output diag file for use with nwdiag")
-    parser.add_argument("-z", "--zone",help="filter results by zone name (match by initial characters) ")
+    parser.add_argument("-z", "--zone", help="filter results by zone name (match by initial characters) ")
+    parser.add_argument("-v", "--vmstate", action='store_true', help="display VM state by text colour")
     vdcRegion = parser.parse_args().region
     diagfileName = parser.parse_args().diagfile
     config_file = parser.parse_args().config
     zonenameFilter = parser.parse_args().zone
+    showVmState =  parser.parse_args().vmstate
 
     # STEP 2: If config file is found, read its content,
     # else query user for the URL, API key, Secret key
@@ -114,7 +116,7 @@ if __name__ == '__main__':
                for vm in vmList['virtualmachine']:
                    for i in range(len(vm['nic'])):
                        if network['id'] == vm['nic'][i]['networkid']:
-                           members.append([int(vm['nic'][i]['ipaddress'].split('.')[-1]),vm['nic'][i]['ipaddress'],vm['name'],vm['id']])
+                           members.append([int(vm['nic'][i]['ipaddress'].split('.')[-1]),vm['nic'][i]['ipaddress'],vm['name'],vm['id'],vm['state']])
                            break # Can break out of this loop as soon as the network id is found for a NIC 
             if len(members)>0:
                 #For nwdiag, network name has zone city appended
@@ -125,10 +127,27 @@ if __name__ == '__main__':
                     diagfile.write(' VDC [address=\"IP %s\"]\n' % (external_IP['publicipaddress'][0]['ipaddress']))
                 members.sort() # VMs will be sorted by the last segment of their IP address (=first element of each members list)
                 for i in range(len(members)):
+                    ###print("DEBUG: %s" % members[i])
                     if i==len(members)-1:  #this is last VM in the network
-                       print("   "+unichr(0x2514)+" %s: '%s'" % (members[i][1],members[i][2]), end='')
+                        if showVmState:
+                           if members[i][4] == 'Running':
+                              print("   "+unichr(0x2514)+"\x1b[32m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='')
+                           elif members[i][4] == 'Stopped':
+                              print("   "+unichr(0x2514)+"\x1b[31m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='')
+                           else:
+                              print("   "+unichr(0x2514)+"\x1b[36m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='') 
+                        else:
+                           print("   "+unichr(0x2514)+" %s: '%s' " % (members[i][1],members[i][2]), end='') 
                     else:
-                       print("   "+unichr(0x251C)+" %s: '%s'" % (members[i][1],members[i][2]), end='')
+                       if showVmState:
+                           if members[i][4] == 'Running':
+                              print("   "+unichr(0x251C)+"\x1b[32m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='')
+                           elif members[i][4] == 'Stopped':
+                              print("   "+unichr(0x251C)+"\x1b[31m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='')
+                           else:
+                              print("   "+unichr(0x251C)+"\x1b[36m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='') 
+                       else:
+                           print("   "+unichr(0x251C)+" %s: '%s' " % (members[i][1],members[i][2]), end='')
                     if external_IP != {}:
                        #check for port forwarding rules
                        if portForwardingRulesList != {}: # Test if any port-forwarding rules exist
