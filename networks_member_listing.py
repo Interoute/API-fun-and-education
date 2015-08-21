@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 # Python script for the Interoute Virtual Data Centre API:
-#   Name: networks_member_listing-v2.py
+#   Name: networks_member_listing.py
 #   Purpose: List the networks in a VDC with the VMs belonging to each network
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 # See the repo: https://github.com/Interoute/API-fun-and-education
 #
-# You can pass options via the command line: type 'python networks_member_listing-v2.py -h'
+# You can pass options via the command line: type 'python networks_member_listing.py -h'
 # for usage information
 #
 # Copyright (C) Interoute Communications Limited, 2015
@@ -158,6 +158,6 @@ if __name__ == '__main__':
         diagfile.close()
                 
     except KeyError:
-        # if no network, " networksList['network'] " will raise exception
-        # but other failures of API calls will also raise this exception!?
+        # if no network exists, " networksList['network'] " will raise exception
+        # but other failures of API calls will also raise this exception
         print('Nothing to do: No networks found')

@@ -1,11 +1,12 @@
 #! /usr/bin/env python
 # Python script for the Interoute Virtual Data Centre API:
-#   Name: networks_member_listing.py
+#   Name: networks_member_listing_v1.py
 #   Purpose: List the networks in a VDC with the VMs belonging to each network
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 # For download and information: 
-#   https://gist.github.com/InterouteGIST/961f0683f3a45332dc20
+#  https://github.com/Interoute/API-fun-and-education
 #
+# ***This is version 1; see networks_member_listing.py for the latest***
 # Copyright (C) Interoute Communications Limited, 2014
 
 from __future__ import print_function
