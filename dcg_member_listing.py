@@ -71,6 +71,8 @@ if __name__ == '__main__':
     api = vdc.VDCApiCall(api_url, apiKey, secret)
  
     # STEP 4: API calls to get the information about DCGs and networks
+    # Note : Any VDC account used must be able to access the VDC regions in the following list.
+    #  Edit the list for a limited account (for example, a 14-day trial account is excluded from Asia region)
     vdcRegions = ['Europe', 'USA', 'Asia']
     dcgList = api.listDirectConnectGroups({})
     networksLists = {}
@@ -98,7 +100,7 @@ if __name__ == '__main__':
             for r in vdcRegions:
                for n in networksLists[r]['network']:
                   if n['dcgfriendlyname'] == d['name']:
-                     members.append([n['cidr'],n['name'],n['zonename'],r,n['id'],n['isprovisioned']])
+                     members.append([n['cidr'],n['name'],n['zonename'],r,n['id'],n['isprovisioned'],n['displaytext']])
             if len(members)>0:
                 members = sorted(members, key=lambda x: x[2]) #sort by zonename
                 members = sorted(members, key=lambda x: x[3]) #sort by region
@@ -108,14 +110,20 @@ if __name__ == '__main__':
                     else:
                        provisionedLabel = "/NotProv/ "
                     if i==len(members)-1:  #if this is last item in list
-                       print("   "+unichr(0x2514)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][2],members[i][3]))
+                       if members[i][1] != members[i][6]: #if network 'name' and 'displaytext' are not the same
+                          print("   "+unichr(0x2514)+" %s: %s'%s'|'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][6],members[i][2],members[i][3]))
+                       else:
+                          print("   "+unichr(0x2514)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][2],members[i][3]))
                        if show_netmem:
                            if vmLists[members[i][2]] != {}:
                               print_network_members(vmLists[members[i][2]],members[i][4],members[i][5],"        ")
                            else:
                               print("        " + "*(NO MEMBERS)")
                     else:
-                       print("   "+unichr(0x251C)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][2],members[i][3]))
+                       if members[i][1] != members[i][6]: #if network 'name' and 'displaytext' are not the same
+                          print("   "+unichr(0x251C)+" %s: %s'%s'|'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][6],members[i][2],members[i][3]))
+                       else:
+                          print("   "+unichr(0x251C)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][2],members[i][3]))
                        if show_netmem:
                            if vmLists[members[i][2]] != {}:
                               print_network_members(vmLists[members[i][2]],members[i][4],members[i][5],"   "+unichr(0x2502)+"    ")
