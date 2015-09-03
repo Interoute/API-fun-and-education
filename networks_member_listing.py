@@ -24,9 +24,9 @@ if __name__ == '__main__':
     # STEP 1: Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
-                    help="path/name of the config file to be used for the API URL and API keys")
+                    help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
     parser.add_argument("-r", "--region", choices=['Europe','europe','USA','usa','Asia','asia'],
-                    default='Europe', help="specify the VDC region (Europe, USA or Asia)")
+                    default='Europe', help="specify the VDC region: Europe, USA or Asia (default Europe)")
     parser.add_argument("-f", "--diagfile", default='VDC-network-data.diag',
                     help="name of the output diag file for use with nwdiag")
     parser.add_argument("-z", "--zone", help="filter results by zone name (match by initial characters) ")
