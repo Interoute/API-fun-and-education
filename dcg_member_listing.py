@@ -85,7 +85,11 @@ if __name__ == '__main__':
           zonesList = [z['name'] for z in zonesResponse['zone']]
           vmRawList = api.listVirtualMachines({'region':r}) 
           for z in zonesList:
-              vmLists[z] = [v for v in vmRawList['virtualmachine'] if v['zonename']==z]
+              try:
+                  vmLists[z] = [v for v in vmRawList['virtualmachine'] if v['zonename']==z]
+              except KeyError:  # there are no VMs in this region so lookup in the dict will fail
+                  vmLists[z] = []
+              
 
     # STEP 5: Process the information from the API calls
     try:
