@@ -6,11 +6,7 @@
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 # See the repo: https://github.com/Interoute/API-fun-and-education
 #
-#
-# VERSION 2
-#
-# You can pass options via the command line: type 'python vm_deploy_chooser.py -h'
-# for usage information
+# VERSION 1 FROZEN 2015-09-16
 #
 # Copyright (C) Interoute Communications Limited, 2015
 #
@@ -34,37 +30,6 @@ try:
 except ImportError:
     # We don't have lxml. Oh well- operate with reduced functionality
     xml_parser_imported = False
-
-# get_folder() source: http://stackoverflow.com/questions/13354460/simple-terminal-file-chooser-in-python-libraries
-
-def get_folder():
-    """ Print a numbered
-    list of the subfolders in the working directory
-    (i.e. the directory the
-    script is run from),
-    and returns the directory
-    the user chooses.
-    """
-    print(textwrap.dedent(
-    """
-    Which folder are your files located in?
-    If you cannot see it in this list, you need
-    to copy the folder containing them to the
-    same folder as this script.
-    """
-    )
-    )
-    dirs = [d for d in os.listdir() if os.path.isdir(d)] + ['EXIT']
-    dir_dict = {ind: value for ind, value in enumerate(dirs)}
-    for key in dir_dict:
-        print('(' + str(key) + ') ' + dir_dict[key])
-    print()
-    resp = int(input())
-    if dir_dict[resp] == 'EXIT':
-        sys.exit()
-    else:
-        return dir_dict[resp] 
-
 
 # Taken from https://bitbucket.org/maddagaska/maddautils/src/411cf3811f995de0ee6de000aed069f409afc719/__init__.py?at=master # noqa
 # Offered under BSD license.

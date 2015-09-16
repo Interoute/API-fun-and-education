@@ -4,6 +4,7 @@
 *.pyc
 *.diag
 config*
+testprog_*.py
 VDC-network-data*png
 VDC-network-data*svg
 test*.png
