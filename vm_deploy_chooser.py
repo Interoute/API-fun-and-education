@@ -6,7 +6,6 @@
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 # See the repo: https://github.com/Interoute/API-fun-and-education
 #
-#
 # VERSION 2
 #
 # You can pass options via the command line: type 'python vm_deploy_chooser.py -h'
@@ -27,154 +26,74 @@ import sys
 import pprint
 import time
 import textwrap
-
-try:
-    import lxml.etree as xml
-    xml_parser_imported = True
-except ImportError:
-    # We don't have lxml. Oh well- operate with reduced functionality
-    xml_parser_imported = False
-
-# get_folder() source: http://stackoverflow.com/questions/13354460/simple-terminal-file-chooser-in-python-libraries
-
-def get_folder():
-    """ Print a numbered
-    list of the subfolders in the working directory
-    (i.e. the directory the
-    script is run from),
-    and returns the directory
-    the user chooses.
-    """
-    print(textwrap.dedent(
-    """
-    Which folder are your files located in?
-    If you cannot see it in this list, you need
-    to copy the folder containing them to the
-    same folder as this script.
-    """
-    )
-    )
-    dirs = [d for d in os.listdir() if os.path.isdir(d)] + ['EXIT']
-    dir_dict = {ind: value for ind, value in enumerate(dirs)}
-    for key in dir_dict:
-        print('(' + str(key) + ') ' + dir_dict[key])
-    print()
-    resp = int(input())
-    if dir_dict[resp] == 'EXIT':
-        sys.exit()
-    else:
-        return dir_dict[resp] 
+import argparse
+import urllib
+import urllib2
+import hashlib
+import hmac
 
 
-# Taken from https://bitbucket.org/maddagaska/maddautils/src/411cf3811f995de0ee6de000aed069f409afc719/__init__.py?at=master # noqa
-# Offered under BSD license.
+# Print a list and return choice of item. Source: http://stackoverflow.com/questions/13354460/simple-terminal-file-chooser-in-python-libraries
+def choose_item_from_list(itemlist, prompt='Please select an item by its number'):
+    prompt = prompt + ": "
+    # this print is for preliminary message..
+    # print(textwrap.dedent() )
+    item_dict = {index: value for index, value in enumerate(itemlist)}
+    item_display_list = ["%2d. %s" % (key, item_dict[key]) for key in item_dict] 
+    column_print(item_display_list)
+    print('')
+    response = int(input(prompt))
+    return {'itemindex': response, 'itemcontent': item_dict[response]}
 
-def choose_item_from_list(items,
-                          source=sys.stdin,
-                          dest=sys.stdout,
-                          default='-',
-                          prompt='Please select an item:'):
-    # No item can be selected if there are no items
-    if len(items) == 0:
-        return -1
-
-    # Use the default if we can- otherwise, make sure it's safe
-    if default != '-' and (default in items or default == 'None'):
-        if default == 'None':
-            default = -1
-        else:
-            default = items.index(default)
-    elif isinstance(default, int) and default in range(-1, len(items)):
-        # The default is already an index in the list, or it is none
-        # We don't need to do anything
-        pass
-    else:
-        # If the default has been incorrectly set, or if it has not been set,
-        # set it to nothing
-        default = None
-
-    # Ask the user to make a selection
-    selection = None
-    while selection is None:
-        selection = default
-
-        # Output the header
-        dest.write('%s\n' % prompt)
-        dest.write('0. None')
-        if default == -1:
-            # This is the default option
-            dest.write(' (default)\n')
-        else:
-            dest.write('\n')
-
-        # Output all of the items
-        for item in range(0, len(items)):
-            dest.write('%s. %s' % (item + 1, items[item],))
-            if int(item) == default:
-                # This is the default option
-                dest.write(' (default)\n')
-            else:
-                dest.write('\n')
-
-        dest.flush()
-
-        response = source.readline().rstrip()
-
-        if len(response) == 0:
-            # No response given, prompt again
-            # Otherwise it causes a problem with 'startswith' later
-            continue
-
-        try:
-            # If the input is an integer we treat it as a selection
-            # We don't try to match it to the text of a list item
-            response = int(response)
-            response -= 1
-            if response in range(-1, len(items)):
-                selection = response
-            else:
-                # Give helpful feedback
-                response += 1
-                dest.write('\n')
-                dest.write('I do not have an item number %s.\n' % response)
-                dest.write('\n')
-                dest.flush()
-
-        except ValueError:
-            # It wasn't an integer. Did it match any items in the list?
-            candidates = []
-            for item in ['None'] + items:
-                if item.startswith(response):
-                    candidates.append(item)
-
-            # If the selection is unambiguous, accept it as the choice
-            if len(candidates) == 1:
-                if 'None'.startswith(response):
-                    selection = -1
-                else:
-                    for item in items:
-                        if item.startswith(response):
-                            selection = items.index(item)
-            elif len(candidates) > 1:
-                # The response was ambiguous, it could match multiple items
-                dest.write('\n')
-                dest.write('%s matches multiple items. ' % response)
-                dest.write('Please be more specific.\n')
-                dest.write('\n')
-                dest.flush()
-            else:
-                # The named item wasn't in our list, give useful feedback
-                dest.write('\n')
-                dest.write('%s is not an option.\n' % response)
-                dest.write('\n')
-                dest.flush()
-
-    return selection
-
+# Print a list by columns, Source 'col_print' at http://stackoverflow.com/questions/1524126/how-to-print-a-list-more-nicely
+# Modified with 'min_length_for_columns' so that short lists must appear in one column
+def column_print(lines, term_width=120, indent=0, pad=2, min_length_for_columns=15):
+   n_lines = len(lines)
+   if n_lines == 0:
+      return
+   col_width = max(len(line) for line in lines)
+   if n_lines < min_length_for_columns:
+      n_cols = 1
+      col_len = int(n_lines/n_cols) + (0 if n_lines % n_cols == 0 else 1)
+   else: 
+      n_cols = int((term_width + pad - indent)/(col_width + pad))
+      n_cols = min(n_lines, max(1, n_cols))
+      col_len = int(n_lines/n_cols) + (0 if n_lines % n_cols == 0 else 1)
+      if (n_cols - 1) * col_len >= n_lines:
+         n_cols -= 1
+   cols = [lines[i*col_len : i*col_len + col_len] for i in range(n_cols)]
+   rows = list(zip(*cols))
+   rows_missed = zip(*[col[len(rows):] for col in cols[:-1]])
+   rows.extend(rows_missed)
+   for row in rows:
+      print(" "*indent + (" "*pad).join(line.ljust(col_width) for line in row))
 
 if __name__ == '__main__':
-    #cloudinit_scripts_dir = 'cloudinit-scripts'
-    config_file = os.path.join(os.path.expanduser('~'), '.vdcapi')
+    # STEP: Parse the command line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
+                    help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
+    parser.add_argument("-m", "--mode", choices=['deploy','d','print','p'], default='print',
+                    help="specify the output mode: deploy (deploy the VM) or print (print the API call) (default: print)")
+    parser.add_argument("-f", "--format", choices=['json','j','cloudmonkey','c','url'], default='json',
+                        help="specify the format of the printed API call: json, cloudmonkey or url (default: json)")
+    parser.add_argument("-r", "--region", choices=['Europe','europe','USA','usa','Asia','asia'],
+                    default='Europe', help="specify the VDC region: Europe, USA or Asia (default Europe)")
+    parser.add_argument("-i", "--iso", action='store_true', help="deploy from an ISO image")
+    parser.add_argument("-k", "--keys", action='store_true', help="ask for choice of SSH keys")
+    parser.add_argument("-u", "--userdata", action='store_true', help="ask for input of userdata by filename")
+    parser.add_argument("-a", "--affinity", action='store_true', help="ask for selection of affinity group(s)")
+    vdcRegion = parser.parse_args().region
+    config_file = parser.parse_args().config
+    mode = parser.parse_args().mode
+    printFormat = parser.parse_args().format
+    deployFromISO = parser.parse_args().iso
+    askForSSHKeys = parser.parse_args().keys
+    askForUserdata = parser.parse_args().userdata
+    askForAffinityGroup = parser.parse_args().affinity
+    
+    # STEP: If config file is found, read its content,
+    # else query user for the URL, API key, Secret key
     if os.path.isfile(config_file):
         with open(config_file) as fh:
             data = fh.read()
@@ -182,10 +101,6 @@ if __name__ == '__main__':
             api_url = config['api_url']
             apiKey = config['api_key']
             secret = config['api_secret']
-            #try:
-            #    cloudinit_scripts_dir = config['cloudinit_scripts_dir']
-            #except KeyError:
-            #    pass
     else:
         print('API url (e.g. http://10.220.18.115:8080/client/api):', end='')
         api_url = raw_input()
@@ -193,255 +108,147 @@ if __name__ == '__main__':
         apiKey = raw_input()
         secret = getpass.getpass(prompt='API secret:')
 
+    # STEP: Create the API access object
     api = vdc.VDCApiCall(api_url, apiKey, secret)
 
+#TO ADD: CHOOSE REGION OR FIND ZONES FOR ALL REGIONS THAT THE VDC ACCOUNT CAN ACCESS..........................
 
-#STEP 1: CHOOSE REGION OR FIND ZONES FOR ALL REGIONS (THAT THE VDC ACCOUNT CAN ACCESS)..........................
+    # STEP: Select the zone
+    result = api.listZones({})
+    zonelist = [zone['name'] for zone in result['zone']]
+    zone_ids = [zone['id'] for zone in result['zone']]
+    choice = choose_item_from_list(zonelist, prompt="Select the zone?")
+    zone_id = zone_ids[choice['itemindex']]
+    print("Selected zone: %s, %s\n" % (zone_id, choice['itemcontent']))
 
-    # Service offerings (CPU / RAM)
-    # **** REPLACE THIS CODE ****
-    request = {}
-    result = api.listServiceOfferings(request)
-
-    service_offering_ids = [offering['id']
-                            for offering
-                            in result['serviceoffering']]
-    service_offering_names = [offering['displaytext']
-                              for offering
-                              in result['serviceoffering']]
-
-    choice = -1
-    while choice == -1:
-        choice = choose_item_from_list(
-            service_offering_names,
-            prompt='Select your service offering:'
-        )
-
-        if choice == -1:
-            print()
-            print('Please select a service offering.')
-
-    service_offering_id = service_offering_ids[choice]
-
-    print('Using service offering: %s' % service_offering_id)
-    # **** REPLACE THIS CODE ****
-
-    request = {
-        'available': 'true',
-    }
-    result = api.listZones(request)
-
-    zone_ids = [zone['id']
-                for zone
-                in result['zone']]
-    zone_names = [zone['name']
-                  for zone
-                  in result['zone']]
-
-    choice = -1
-    while choice == -1:
-        choice = choose_item_from_list(
-            zone_names,
-            prompt='Select your zone:'
-        )
-
-        if choice == -1:
-            print()
-            print('Please select a zone.')
-
-    zone_id = zone_ids[choice]
-
-    print('Zone: %s' % zone_id)
-
-    request = {
+    # STEP: Select the template or ISO image
+    if deployFromISO:
+       print("Error: ISO case not implemented yet")
+       exit
+    else:
+       request = {
         'templatefilter': 'executable',
         'zoneid': zone_id,
-    }
-    result = api.listTemplates(request)
+       }
+       result = api.listTemplates(request)
+       templatelist = [template['name'] for template in result['template']]
+       template_ids = [template['id'] for template in result['template']]
+       choice = choose_item_from_list(templatelist, prompt="Select the template?")
+       template_id = template_ids[choice['itemindex']]
+       print("Selected template: %s, %s\n" % (template_id, choice['itemcontent']))
 
-    # We have to filter out templates that are not ready. If we leave them in
-    # and they are selected, an HTTP 530 error will occur.
-    template_ids = [template['id']
-                    for template
-                    in result['template']
-                    if template['isready']]
-    template_names = [template['displaytext']
-                      for template
-                      in result['template']
-                      if template['isready']]
+    # STEP: Select the compute/service offering
+    ramlist = [512,1024,2048,4096,6144,8192,16384,24576,32768,65536,131072]
+    choice_cpu = input("Input the number of CPUs? (between 1 and 12): ")
+    print('')
+    choice_ram = choose_item_from_list(map(lambda x: float(x)/1024, ramlist), prompt="Select the amount of RAM (GBytes)?")
+    result = api.listServiceOfferings({})
+    serviceoffering_id = [s['id'] for s in result['serviceoffering'] if s['name']=='%d-%d'% (ramlist[choice_ram['itemindex']],choice_cpu)][0]
+    print("Selected service offering: %s, \'%s\'\n" % (serviceoffering_id, '%d-%d'% (ramlist[choice_ram['itemindex']],choice_cpu)))
 
-    choice = -1
-    while choice == -1:
-        choice = choose_item_from_list(
-            template_names,
-            prompt='Select your template:'
-        )
+    # (optional) STEP: Select the affinity groups (if any exist)
+    if askForAffinityGroup:
+       print("Error: Select affinity groups not implemented yet")
 
-        if choice == -1:
-            print()
-            print('Please select a template.')
-
-    template_id = template_ids[choice]
-
-    print('Template: %s' % template_id)
-
-    request = {
-        'zoneid': zone_id,
-    }
-    result = api.listNetworks(request)
-
-    network_ids = [network['id']
-                   for network
-                   in result['network']]
-    network_names = [network['displaytext']
-                     for network
-                     in result['network']]
-
-    choice = -1
-    while choice == -1:
-        choice = choose_item_from_list(
-            network_names,
-            prompt='Select your network:'
-        )
-
-        if choice == -1:
-            print()
-            print('Please select a network.')
-
-    network_id = network_ids[choice]
-    '''
-    # Find out which cloudinit script the user wants to use
-    user_data_options = os.listdir(cloudinit_scripts_dir)
-
-    choice = choose_item_from_list(
-        user_data_options,
-        prompt='Select which user data file to attach:'
-    )
-
-    if choice == -1:
-        # User didn't want to attach user data
-        user_data = ""
+    # STEP: Select the network(s)
+    result = api.listNetworks({'zoneid': zone_id})
+    network_ids = [network['id'] for network in result['network']]
+    networklist = ['%s (%s)' % (network['displaytext'],network['name']) for network in result['network']]
+    network_num = input("Input the number of networks?: ")
+    if network_num == 1:
+       choice = choose_item_from_list(networklist, prompt="Select the network from the list? (this will be the default)")
+       network_id = network_ids[choice['itemindex']]
+       print("Selected network: %s, %s\n" % (network_id, choice['itemcontent']))
     else:
-        user_data_filename = os.path.join(
-            cloudinit_scripts_dir,
-            user_data_options[choice],
-        )
+       choice = choose_item_from_list(networklist, prompt="Select network 1? (this will be the default)")
+       network_id = [network_ids[choice['itemindex']]]
+       for i in range(1,network_num):
+          choice = choose_item_from_list(networklist, prompt="Select network %d?"%(i+1))
+          network_id = network_id + [network_ids[choice['itemindex']]]
+       print("Selected networks: %s\n" % (network_id))
+   
+    # (optional) STEP: Select keys
+    if askForSSHKeys:
+       result = api.listSSHKeyPairs({})
+       if result=={}:
+          print("Error: SSH Keypair asked for, but none are set up in this account")
+          askForSSHKeys = False
+       else:
+          keypairnames = [keypair['name'] for keypair in result['sshkeypair']]
+          keypairlist = ['%s (%s)' % (keypair['name'],keypair['fingerprint']) for keypair in result['sshkeypair']]
+          choice = choose_item_from_list(keypairlist, prompt="Select SSH keypair?")
+          keypairname = keypairnames[choice['itemindex']]
 
-        with open(user_data_filename) as user_data_handle:
-            user_data = user_data_handle.read()
+    # (optional) STEP: Input userdata
+    if askForUserdata:
+       print("Error: Input of userdata not implemented yet")
 
-    if xml_parser_imported:
-        # If the template is an XSLT, process it
-        if user_data.startswith('<?xml '):
-            user_data_template = xml.XML(user_data)
-
-            # Get the stylesheet prefix
-            prefix = user_data_template.tag.split('}')[0] + '}'
-
-            # Find all required variables
-            required_variables = {}
-            elements = user_data_template.getchildren()[0].findall('%svalue-of'
-                                                                   % prefix)
-            for element in elements:
-                required_variables[element.values()[0].split('/', 1)[1]] = ''
-
-            for variable in required_variables.keys():
-                # Get value user wants to use for variable
-                print('Enter value for template variable %s:' % variable,
-                      end='')
-                required_variables[variable] = raw_input()
-
-            # Build an XML doc from the provided variables to use with the XSLT
-            xml_variables = '<vars>'
-            for variable, value in required_variables.items():
-                xml_variables += '<%s>%s</%s>' % (variable, value, variable)
-            xml_variables += '</vars>'
-            xml_variables = xml.XML(xml_variables)
-
-            # Convert the template to XSLT
-            user_data_template = xml.XSLT(user_data_template)
-
-            # Apply the variables to the template to get the user data
-            user_data = str(user_data_template(xml_variables))
-
-            # Remove the leading line with the XML version added by the XSLT
-            user_data = user_data.split('\n', 1)[1].strip()
-    else:
-        print('No xml parser present.')
-        print('Using raw cloudinit script.')
-        print('If the template is xml this is probably bad')
-        print('See README if you need to fix this.')
-
-    print('Using user data: %s' % user_data)
-
-    user_data = base64.b64encode(user_data)
-    '''
-    default_hostname = '%s-%d' % (getpass.getuser(), time.time())
+    # STEP: Enter the VM 'name' and 'displaytext'
+    #default_hostname = 
     hostname = raw_input(
-        'Enter hostname for new VM (default %s):' % default_hostname
+       # 'Input name for the new VM (default %s):' % default_hostname
+       'Input name for the new VM: ' 
     )
     hostname = hostname.strip()
-    if len(hostname) == 0:
-        hostname = default_hostname
+    #if len(hostname) == 0:
+    #    hostname = default_hostname
 
     default_displayname = hostname
     displayname = raw_input(
-        'Enter displayname for new VM (press ENTER for default %s):' % default_displayname
+        'Input displayname for new VM (press ENTER for default: %s):' % default_displayname
     )
     displayname = displayname.strip()
     if len(displayname) == 0:
         displayname = default_displayname
-
-    choice = -1
-    while choice == -1:
-        choice = choose_item_from_list(
-            ['On', 'Off'],
-            prompt='Select the initial power state of your VM:'
-        )
-
-        if choice == -1:
-            print()
-            print('Please select the initial power state of your VM.')
-
-    if choice == 0:
-        start_vm = 'true'
-    else:
-        start_vm = 'false'
-
-    # Now build the VM
-    request = {
-        'serviceofferingid': service_offering_id,
+    
+    # STEP: Deploy the VM, or print out the API call
+    deploy_params = {
+        'region': vdcRegion,
+        'serviceofferingid': serviceoffering_id,
         'templateid': template_id,
         'zoneid': zone_id,
         'displayname': displayname,
         'name': hostname,
-        ##'userdata': user_data,
-        'networkids': network_id,
-        'startvm': start_vm,
+        'networkids': network_id
     }
-
-    # Get rid of the userdata if none is set
-    #if len(request['userdata']) == 0:
-    #    request.pop('userdata')
-
-    # Print the request and wait for confirmation
-    print("This is the chosen configuration:\n %s\n" % request)
-    choice = -1
-    while choice == -1:
-        choice = choose_item_from_list(
-            ['Deploy now', 'Cancel and exit'],
-            prompt='Deploy VM or cancel:'
-        )
-
-    if choice == 2:
-        exit
-
-    result = api.deployVirtualMachine(request)
-    job_id = result['jobid']
-
-    request = {
-        'jobid': job_id,
-    }
-
-    pprint.pprint(api.wait_for_job(job_id))
-
+    if askForSSHKeys:
+        deploy_params['keypair'] = keypairname
+    print('')
+    if mode=='print':
+        if printFormat=='json':
+           print(json.dumps(deploy_params))
+        elif printFormat=='cloudmonkey':
+           params = ["%s=%s" % (key, deploy_params[key]) for key in deploy_params]
+           print("deploy virtualmachine " + " ".join(params))
+        else:
+           deploy_params['command'] = 'deployVirtualMachine'
+           httprequest = zip(deploy_params.keys(), deploy_params.values())
+           httprequest.sort(key=lambda x: x[0].lower())
+           httprequest_data = "&".join(["=".join([r[0], urllib.quote_plus(str(r[1]))])
+                                for r in httprequest])
+           hashStr = "&".join(
+               [
+                "=".join(
+                    [r[0].lower(),
+                     str.lower(urllib.quote_plus(str(r[1]))).replace(
+                         "+", "%20"
+                     )]
+                ) for r in httprequest
+            ])
+           sig = urllib.quote_plus(base64.b64encode(
+             hmac.new(
+                 secret,
+                 hashStr,
+                 hashlib.sha1
+             ).digest()
+           ).strip())
+           httprequest_data += "&signature=%s" % sig
+           print(api_url + "?" + httprequest_data)
+    else:
+        print("Ready to deploy VM with these parameters:")
+        pprint.print(json.dumps(deploy_params))
+        choice = raw_input("Input D to deploy or any other key to exit:")
+        if choice=="d" or choice=="D":
+           result = api.deployVirtualMachine(deploy_params)
+           job_id = result['jobid']
+           pprint.pprint(api.wait_for_job(job_id))
