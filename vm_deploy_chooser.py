@@ -17,6 +17,7 @@
 # Revised by Sandy Walker (Interoute), 2013
 
 from __future__ import print_function
+from collections import OrderedDict
 import base64
 import vdc_api_call as vdc
 import getpass
@@ -132,11 +133,12 @@ if __name__ == '__main__':
         'zoneid': zone_id,
        }
        result = api.listTemplates(request)
-       templatelist = [template['name'] for template in result['template']]
-       template_ids = [template['id'] for template in result['template']]
+       templates_sorted = sorted(result['template'], key=lambda item: item['name'].upper())
+       templatelist = [template['name'] for template in templates_sorted]
+       template_ids = [template['id'] for template in templates_sorted]
        choice = choose_item_from_list(templatelist, prompt="Select the template?")
        template_id = template_ids[choice['itemindex']]
-       print("Selected template: %s, %s\n" % (template_id, choice['itemcontent']))
+       print("Selected template: %s, '%s'\n" % (template_id, choice['itemcontent']))
 
     # STEP: Select the compute/service offering
     ramlist = [512,1024,2048,4096,6144,8192,16384,24576,32768,65536,131072]
@@ -182,6 +184,7 @@ if __name__ == '__main__':
 
     # (optional) STEP: Input userdata
     if askForUserdata:
+       print('')
        userdataFilename = raw_input('Input the path/name for the PLAIN TEXT file with the userdata: ')
        try:
           with open(userdataFilename) as fh:
@@ -189,15 +192,17 @@ if __name__ == '__main__':
           userdata_b64 = base64.b64encode(userdata)
        except IOError:
           print("Error: Userdata plain text file not found or cannot be opened. Userdata will not be included in the deploy.")
-          askForUserData = False
+          askForUserdata = False
           pass
           
        
     # STEP: Enter the VM 'name' and 'displaytext'
-    #default_hostname = 
+    ## TO DO: (1) create a default VM name, (2) do a test to check new name is unique against existing VMs
+    #default_hostname =
+    print('')
     hostname = raw_input(
        # 'Input name for the new VM (default %s):' % default_hostname
-       'Input name for the new VM: ' 
+       'Input name for the new VM (name must be unique): ' 
     )
     hostname = hostname.strip()
     #if len(hostname) == 0:
@@ -230,6 +235,8 @@ if __name__ == '__main__':
         if printFormat=='json':
            print(json.dumps(deploy_params))
         elif printFormat=='cloudmonkey':
+           # For Cloudmonkey, 'region' is set by a separate command
+           deploy_params.pop('region')  
            params = ["%s=%s" % (key, deploy_params[key]) for key in deploy_params]
            print("deploy virtualmachine " + " ".join(params))
         else:
