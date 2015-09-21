@@ -114,7 +114,7 @@ if __name__ == '__main__':
 #TO ADD: CHOOSE REGION OR FIND ZONES FOR ALL REGIONS THAT THE VDC ACCOUNT CAN ACCESS..........................
 
     # STEP: Select the zone
-    result = api.listZones({})
+    result = api.listZones({'region': vdcRegion})
     zonelist = [zone['name'] for zone in result['zone']]
     zone_ids = [zone['id'] for zone in result['zone']]
     choice = choose_item_from_list(zonelist, prompt="Select the zone?")
@@ -127,6 +127,7 @@ if __name__ == '__main__':
        exit
     else:
        request = {
+        'region': vdcRegion,
         'templatefilter': 'executable',
         'zoneid': zone_id,
        }
@@ -142,7 +143,7 @@ if __name__ == '__main__':
     choice_cpu = input("Input the number of CPUs? (between 1 and 12): ")
     print('')
     choice_ram = choose_item_from_list(map(lambda x: float(x)/1024, ramlist), prompt="Select the amount of RAM (GBytes)?")
-    result = api.listServiceOfferings({})
+    result = api.listServiceOfferings({'region': vdcRegion})
     serviceoffering_id = [s['id'] for s in result['serviceoffering'] if s['name']=='%d-%d'% (ramlist[choice_ram['itemindex']],choice_cpu)][0]
     print("Selected service offering: %s, \'%s\'\n" % (serviceoffering_id, '%d-%d'% (ramlist[choice_ram['itemindex']],choice_cpu)))
 
@@ -151,7 +152,7 @@ if __name__ == '__main__':
        print("Error: Select affinity groups not implemented yet")
 
     # STEP: Select the network(s)
-    result = api.listNetworks({'zoneid': zone_id})
+    result = api.listNetworks({'region': vdcRegion, 'zoneid': zone_id})
     network_ids = [network['id'] for network in result['network']]
     networklist = ['%s (%s)' % (network['displaytext'],network['name']) for network in result['network']]
     network_num = input("Input the number of networks?: ")
@@ -169,9 +170,9 @@ if __name__ == '__main__':
    
     # (optional) STEP: Select keys
     if askForSSHKeys:
-       result = api.listSSHKeyPairs({})
+       result = api.listSSHKeyPairs({'region': vdcRegion})
        if result=={}:
-          print("Error: SSH Keypair asked for, but none are set up in this account")
+          print("Error: SSH Keypair asked for, but none are set up in this account in this region")
           askForSSHKeys = False
        else:
           keypairnames = [keypair['name'] for keypair in result['sshkeypair']]
@@ -181,8 +182,17 @@ if __name__ == '__main__':
 
     # (optional) STEP: Input userdata
     if askForUserdata:
-       print("Error: Input of userdata not implemented yet")
-
+       userdataFilename = raw_input('Input the path/name for the PLAIN TEXT file with the userdata: ')
+       try:
+          with open(userdataFilename) as fh:
+             userdata=fh.read()
+          userdata_b64 = base64.b64encode(userdata)
+       except IOError:
+          print("Error: Userdata plain text file not found or cannot be opened. Userdata will not be included in the deploy.")
+          askForUserData = False
+          pass
+          
+       
     # STEP: Enter the VM 'name' and 'displaytext'
     #default_hostname = 
     hostname = raw_input(
@@ -213,6 +223,8 @@ if __name__ == '__main__':
     }
     if askForSSHKeys:
         deploy_params['keypair'] = keypairname
+    if askForUserdata:
+        deploy_params['userdata'] = userdata_b64
     print('')
     if mode=='print':
         if printFormat=='json':
