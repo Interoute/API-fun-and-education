@@ -6,6 +6,9 @@
 # For download and information see the repo:
 #   https://github.com/Interoute/API-fun-and-education 
 #
+# This program should be run with Python using the '-i' option:
+#     python -i vdc_starter.py
+#
 # Copyright (C) Interoute Communications Limited, 2014
 
 from __future__ import print_function
@@ -20,10 +23,7 @@ if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
-                    help="path/name of the config file to be used for the API URL and API keys")
-    parser.add_argument("-r", "--region", choices=['Europe','europe','USA','usa','Asia','asia'],
-                    default='Europe', help="specify the VDC region (Europe, USA or Asia)")
-    vdcRegion = parser.parse_args().region
+                    help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
     config_file = parser.parse_args().config
     
     # If config file is found, read its content,
