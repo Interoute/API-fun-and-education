@@ -270,7 +270,7 @@ if __name__ == '__main__':
            print('')
     else:
         print("Ready to deploy VM with these parameters:")
-        pprint.print(json.dumps(deploy_params))
+        pprint.pprint(json.dumps(deploy_params))
         choice = raw_input("Input D to deploy or any other key to exit:")
         if choice=="d" or choice=="D":
            result = api.deployVirtualMachine(deploy_params)
