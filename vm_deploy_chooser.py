@@ -46,7 +46,7 @@ def choose_item_from_list(itemlist, prompt='Please select an item by its number'
     response = int(input(prompt))
     return {'itemindex': response, 'itemcontent': item_dict[response]}
 
-# Print a list by columns, Source 'col_print' at http://stackoverflow.com/questions/1524126/how-to-print-a-list-more-nicely
+# Print a list by columns. Source: 'col_print' at http://stackoverflow.com/questions/1524126/how-to-print-a-list-more-nicely
 # Modified with 'min_length_for_columns' so that short lists must appear in one column
 def column_print(lines, term_width=120, indent=0, pad=2, min_length_for_columns=15):
    n_lines = len(lines)
@@ -232,13 +232,17 @@ if __name__ == '__main__':
         deploy_params['userdata'] = userdata_b64
     print('')
     if mode=='print':
+        print("-------------------------------------------\nRequired deploy command in %s format\n-------------------------------------------\n" % (printFormat))
         if printFormat=='json':
            print(json.dumps(deploy_params))
+           print('')
         elif printFormat=='cloudmonkey':
            # For Cloudmonkey, 'region' is set by a separate command
            deploy_params.pop('region')  
            params = ["%s=%s" % (key, deploy_params[key]) for key in deploy_params]
+           print("NOTE: you need to execute the command 'set region %s' for the following deploy command to work...\n" % (vdcRegion))
            print("deploy virtualmachine " + " ".join(params))
+           print('')
         else:
            deploy_params['command'] = 'deployVirtualMachine'
            httprequest = zip(deploy_params.keys(), deploy_params.values())
@@ -263,6 +267,7 @@ if __name__ == '__main__':
            ).strip())
            httprequest_data += "&signature=%s" % sig
            print(api_url + "?" + httprequest_data)
+           print('')
     else:
         print("Ready to deploy VM with these parameters:")
         pprint.print(json.dumps(deploy_params))
