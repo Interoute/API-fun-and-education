@@ -118,6 +118,7 @@ if __name__ == '__main__':
     result = api.listZones({'region': vdcRegion})
     zonelist = [zone['name'] for zone in result['zone']]
     zone_ids = [zone['id'] for zone in result['zone']]
+    print("ZONES:")
     choice = choose_item_from_list(zonelist, prompt="Select the zone?")
     zone_id = zone_ids[choice['itemindex']]
     print("Selected zone: %s, %s\n" % (zone_id, choice['itemcontent']))
@@ -136,6 +137,7 @@ if __name__ == '__main__':
        templates_sorted = sorted(result['template'], key=lambda item: item['name'].upper())
        templatelist = [template['name'] for template in templates_sorted]
        template_ids = [template['id'] for template in templates_sorted]
+       print("TEMPLATES:")
        choice = choose_item_from_list(templatelist, prompt="Select the template?")
        template_id = template_ids[choice['itemindex']]
        print("Selected template: %s, '%s'\n" % (template_id, choice['itemcontent']))
@@ -144,6 +146,7 @@ if __name__ == '__main__':
     ramlist = [512,1024,2048,4096,6144,8192,16384,24576,32768,65536,131072]
     choice_cpu = input("Input the number of CPUs? (between 1 and 12): ")
     print('')
+    print("RAM MEMORY:")
     choice_ram = choose_item_from_list(map(lambda x: float(x)/1024, ramlist), prompt="Select the amount of RAM (GBytes)?")
     result = api.listServiceOfferings({'region': vdcRegion})
     serviceoffering_id = [s['id'] for s in result['serviceoffering'] if s['name']=='%d-%d'% (ramlist[choice_ram['itemindex']],choice_cpu)][0]
@@ -179,12 +182,14 @@ if __name__ == '__main__':
        else:
           keypairnames = [keypair['name'] for keypair in result['sshkeypair']]
           keypairlist = ['%s (%s)' % (keypair['name'],keypair['fingerprint']) for keypair in result['sshkeypair']]
+          print("KEY PAIRS:")
           choice = choose_item_from_list(keypairlist, prompt="Select SSH keypair?")
           keypairname = keypairnames[choice['itemindex']]
 
     # (optional) STEP: Input userdata
     if askForUserdata:
        print('')
+       print("USERDATA:")
        userdataFilename = raw_input('Input the path/name for the PLAIN TEXT file with the userdata: ')
        try:
           with open(userdataFilename) as fh:
