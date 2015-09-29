@@ -237,7 +237,7 @@ if __name__ == '__main__':
            print(json.dumps(deploy_params))
            print('')
         elif printFormat=='cloudmonkey':
-           # For Cloudmonkey, 'region' is set by a separate command
+           # for Cloudmonkey, 'region' is set by a separate command
            deploy_params.pop('region')  
            params = ["%s=%s" % (key, deploy_params[key]) for key in deploy_params]
            print("NOTE: you need to execute the command 'set region %s' for the following deploy command to work...\n" % (vdcRegion))
@@ -245,6 +245,8 @@ if __name__ == '__main__':
            print('')
         else:
            deploy_params['command'] = 'deployVirtualMachine'
+           deploy_params['response'] = 'json'
+           deploy_params['apiKey'] = apiKey 
            httprequest = zip(deploy_params.keys(), deploy_params.values())
            httprequest.sort(key=lambda x: x[0].lower())
            httprequest_data = "&".join(["=".join([r[0], urllib.quote_plus(str(r[1]))])
