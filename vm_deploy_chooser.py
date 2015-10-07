@@ -231,10 +231,18 @@ if __name__ == '__main__':
         'name': hostname,
         'networkids': network_id
     }
+
     if askForSSHKeys:
         deploy_params['keypair'] = keypairname
     if askForUserdata:
         deploy_params['userdata'] = userdata_b64
+
+    # If name or displayname are empty strings, then remove these parameter(s) from the API request
+    if hostname == '':
+        deploy_params.pop('name')
+    if displayname == '':
+        deploy_params.pop('displayname')
+
     print('')
     if mode=='print':
         print("-------------------------------------------\nRequired deploy command in %s format\n-------------------------------------------\n" % (printFormat))
