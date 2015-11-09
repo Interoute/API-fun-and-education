@@ -167,10 +167,10 @@ if __name__ == '__main__':
        print("Selected network: %s, %s\n" % (network_id, choice['itemcontent']))
     else:
        choice = choose_item_from_list(networklist, prompt="Select network 1? (this will be the default)")
-       network_id = [network_ids[choice['itemindex']]]
+       network_id = network_ids[choice['itemindex']]
        for i in range(1,network_num):
           choice = choose_item_from_list(networklist, prompt="Select network %d?"%(i+1))
-          network_id = network_id + [network_ids[choice['itemindex']]]
+          network_id = network_id + ',' + network_ids[choice['itemindex']]
        print("Selected networks: %s\n" % (network_id))
    
     # (optional) STEP: Select keys
