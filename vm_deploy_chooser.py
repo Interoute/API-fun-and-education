@@ -80,10 +80,12 @@ if __name__ == '__main__':
                         help="specify the format of the printed API call: json, cloudmonkey or url (default: json)")
     parser.add_argument("-r", "--region", choices=['Europe','europe','USA','usa','Asia','asia'],
                     default='Europe', help="specify the VDC region: Europe, USA or Asia (default Europe)")
-    parser.add_argument("-i", "--iso", action='store_true', help="deploy from an ISO image")
     parser.add_argument("-k", "--keys", action='store_true', help="ask for choice of SSH keys")
     parser.add_argument("-u", "--userdata", action='store_true', help="ask for input of userdata by filename")
-    parser.add_argument("-a", "--affinity", action='store_true', help="ask for selection of affinity group(s)")
+    parser.add_argument("-p", "--portforwarding", action='store_true', help="ask for input of portforwarding ports and generate output command or url")
+    parser.add_argument("-a", "--affinity", action='store_true', help="[NOT IMPLEMENTED] ask for selection of affinity group(s)")
+    parser.add_argument("-i", "--iso", action='store_true', help="[NOT IMPLEMENTED] deploy from an ISO image")
+
     vdcRegion = parser.parse_args().region
     config_file = parser.parse_args().config
     mode = parser.parse_args().mode
@@ -92,6 +94,7 @@ if __name__ == '__main__':
     askForSSHKeys = parser.parse_args().keys
     askForUserdata = parser.parse_args().userdata
     askForAffinityGroup = parser.parse_args().affinity
+    askForPortforwarding = parser.parse_args().portforwarding
     
     # STEP: If config file is found, read its content,
     # else query user for the URL, API key, Secret key
@@ -154,7 +157,7 @@ if __name__ == '__main__':
 
     # (optional) STEP: Select the affinity groups (if any exist)
     if askForAffinityGroup:
-       print("Error: Select affinity groups not implemented yet")
+       print("Error: Select affinity groups not implemented yet, ignoring and continuing")
 
     # STEP: Select the network(s)
     result = api.listNetworks({'region': vdcRegion, 'zoneid': zone_id})
@@ -172,6 +175,18 @@ if __name__ == '__main__':
           choice = choose_item_from_list(networklist, prompt="Select network %d?"%(i+1))
           network_id = network_id + ',' + network_ids[choice['itemindex']]
        print("Selected networks: %s\n" % (network_id))
+
+    # (optional) STEP: Select portforwarding ports
+    if askForPortforwarding:
+        print("Error: Portforwarding not finished implementation")
+
+    # 1 check network list for local with gateway network(s)
+    # 2 if zero, exit to next step
+    # 3 if more than one network, ask for selection
+    # 4 ask for number of portforwardings rules
+    # 5 for each rule, ask for public port and private port            
+                        
+                    
    
     # (optional) STEP: Select keys
     if askForSSHKeys:
@@ -242,6 +257,11 @@ if __name__ == '__main__':
         deploy_params.pop('name')
     if displayname == '':
         deploy_params.pop('displayname')
+
+
+    if askForPortforwarding:
+        print("Error: Portforwarding not finished implementation")
+                    
 
     print('')
     if mode=='print':
