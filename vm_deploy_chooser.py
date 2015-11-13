@@ -8,6 +8,11 @@
 #
 # VERSION 2
 #
+# Deploys the virtual machine immediately
+# or returns JSON parameter data or Cloudmonkey command or runnable URL to perform the deployment
+#
+# Optional: execute or return commands to create firewall rules for ingress to the virtual machine
+#
 # You can pass options via the command line: type 'python vm_deploy_chooser.py -h'
 # for usage information
 #
