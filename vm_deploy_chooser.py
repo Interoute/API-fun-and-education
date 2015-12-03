@@ -11,7 +11,7 @@
 # Deploys the virtual machine immediately
 # or returns JSON parameter data or Cloudmonkey command or runnable URL to perform the deployment
 #
-# Optional: execute or return commands to create firewall rules for ingress to the virtual machine
+# Optional: execute or return commands to create portforwarding rules for ingress to the virtual machine
 #
 # You can pass options via the command line: type 'python vm_deploy_chooser.py -h'
 # for usage information
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                     default='Europe', help="specify the VDC region: Europe, USA or Asia (default Europe)")
     parser.add_argument("-k", "--keys", action='store_true', help="ask for choice of SSH keys")
     parser.add_argument("-u", "--userdata", action='store_true', help="ask for input of userdata by filename")
-    parser.add_argument("-p", "--portforwarding", action='store_true', help="ask for input of portforwarding ports and generate output command or url")
+    parser.add_argument("-p", "--portforwarding", action='store_true', help="ask for input of portforwarding port(s) and execute create rules or generate commands")
     parser.add_argument("-a", "--affinity", action='store_true', help="[NOT IMPLEMENTED] ask for selection of affinity group(s)")
     parser.add_argument("-i", "--iso", action='store_true', help="[NOT IMPLEMENTED] deploy from an ISO image")
 

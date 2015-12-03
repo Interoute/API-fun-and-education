@@ -8,6 +8,10 @@
 # You can pass options via the command line: type 'python dcg_member_listing.py -h'
 # for usage information
 #
+# The VDC account used must be able to access the VDC regions in the argument 'regionlist'.
+# Use the regionlist argument to change the regions for a limited account (for example, a 14-day trial account is excluded from Asia region)
+# Example of passing region names as arguments (no braces or quote characters): 'python dcg_member_listing.py --regionlist Europe USA -n'
+#
 # Copyright (C) Interoute Communications Limited, 2015
 
 from __future__ import print_function
@@ -48,8 +52,14 @@ if __name__ == '__main__':
                     help="path/name of the config file to be used for the API URL and API keys")
     parser.add_argument("-n","--netmem",action='store_true',
                     help="show the VM members of the Private Direct Connect networks")
+    parser.add_argument("-r","--regionlist",default=['Europe', 'USA', 'Asia'],nargs='+',
+                    help="specify the list of regions to be checked")
+    # Note : The VDC account used must be able to access all of the VDC regions in the argument 'regionlist'.
+    # Use this argument to change the list for a limited account (for example, a 14-day trial account is excluded from Asia region)
     config_file = parser.parse_args().config
     show_netmem = parser.parse_args().netmem
+    vdcRegions = parser.parse_args().regionlist
+    ##print(vdcRegions)
 
     # STEP 2: If config file is found, read its content,
     # else query user for the URL, API key, Secret key
@@ -71,9 +81,6 @@ if __name__ == '__main__':
     api = vdc.VDCApiCall(api_url, apiKey, secret)
  
     # STEP 4: API calls to get the information about DCGs and networks
-    # Note : Any VDC account used must be able to access the VDC regions in the following list.
-    #  Edit the list for a limited account (for example, a 14-day trial account is excluded from Asia region)
-    vdcRegions = ['Europe', 'USA', 'Asia']
     dcgList = api.listDirectConnectGroups({})
     networksLists = {}
     if show_netmem:
