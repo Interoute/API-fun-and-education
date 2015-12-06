@@ -10,7 +10,7 @@
 #
 # The VDC account used must be able to access the VDC regions in the argument 'regionlist'.
 # Use the regionlist argument to change the regions for a limited account (for example, a 14-day trial account is excluded from Asia region)
-# Example of passing region names as arguments (no braces or quote characters): 'python dcg_member_listing.py --regionlist Europe USA -n'
+# Example of passing region names as arguments (do not use bracesm, quotes or commas): 'python dcg_member_listing.py --regionlist Europe USA -n'
 #
 # Copyright (C) Interoute Communications Limited, 2015
 
@@ -59,7 +59,6 @@ if __name__ == '__main__':
     config_file = parser.parse_args().config
     show_netmem = parser.parse_args().netmem
     vdcRegions = parser.parse_args().regionlist
-    ##print(vdcRegions)
 
     # STEP 2: If config file is found, read its content,
     # else query user for the URL, API key, Secret key
@@ -87,6 +86,8 @@ if __name__ == '__main__':
        vmLists = {}
     for r in vdcRegions:
        networksLists[r] = api.listNetworks({'region': r, 'subtype': 'privatedirectconnect'})
+       if networksLists[r]['count'] == 0: # there are no PrivateDirectconnect networks in this region
+          networksLists[r]['network'] = []
        if show_netmem:
           zonesResponse = api.listZones({'region':r})
           zonesList = [z['name'] for z in zonesResponse['zone']]
@@ -102,16 +103,21 @@ if __name__ == '__main__':
     try:
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
         print("\nDirect Connect Groups for the account '%s' checked at %s:"
-            % (networksLists['Europe']['network'][0]['domain'], checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
+            % (api.getApiLimit({})['apilimit']['account'], checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
+        if len(vdcRegions)==3:
+            print("All VDC regions are being scanned for attached networks")
+        else:
+            print("\n** Only these regions will be scanned and the attached PrivateDirectConnect networks shown: %s" % (vdcRegions))
         print("\n** Networks which have 'isprovisioned' set to False are labelled with '/NotProv/' and are not functional")
         print("** Output will not be correct for DCGs and networks that were not created with NetworkAPI functions because\n** these are missing the information in the listNetworks call which identifies the DCG membership of the network\n") 
         for d in dcgList['directconnectgroups']:
             print(" "+unichr(0x2015)+' \'%s\' (dcgid: %s)' % (d['name'], d['id']))
             members = []
             for r in vdcRegions:
-               for n in networksLists[r]['network']:
-                  if n['dcgfriendlyname'] == d['name']:
-                     members.append([n['cidr'],n['name'],n['zonename'],r,n['id'],n['isprovisioned'],n['displaytext']])
+               if networksLists[r]['network'] != []:
+                  for n in networksLists[r]['network']:
+                      if n['dcgfriendlyname'] == d['name']:
+                         members.append([n['cidr'],n['name'],n['zonename'],r,n['id'],n['isprovisioned'],n['displaytext']])
             if len(members)>0:
                 members = sorted(members, key=lambda x: x[2]) #sort by zonename
                 members = sorted(members, key=lambda x: x[3]) #sort by region
