@@ -38,7 +38,6 @@ import urllib2
 import hashlib
 import hmac
 
-
 # Print a list and return choice of item. Source: http://stackoverflow.com/questions/13354460/simple-terminal-file-chooser-in-python-libraries
 def choose_item_from_list(itemlist, prompt='Please select an item by its number'):
     prompt = prompt + ": "
@@ -87,7 +86,7 @@ if __name__ == '__main__':
                     default='Europe', help="specify the VDC region: Europe, USA or Asia (default Europe)")
     parser.add_argument("-k", "--keys", action='store_true', help="ask for choice of SSH keys")
     parser.add_argument("-u", "--userdata", action='store_true', help="ask for input of userdata by filename")
-    parser.add_argument("-p", "--portforwarding", action='store_true', help="ask for input of portforwarding port(s) and execute create rules or generate commands")
+    parser.add_argument("-p", "--portforwarding", action='store_true', help="ask for input of portforwarding port(s) and execute create rules or output the create commands")
     parser.add_argument("-a", "--affinity", action='store_true', help="[NOT IMPLEMENTED] ask for selection of affinity group(s)")
     parser.add_argument("-i", "--iso", action='store_true', help="[NOT IMPLEMENTED] deploy from an ISO image")
 
@@ -131,6 +130,12 @@ if __name__ == '__main__':
     zone_id = zone_ids[choice['itemindex']]
     print("Selected zone: %s, %s\n" % (zone_id, choice['itemcontent']))
 
+    # STEP: Check if a network exists in selected zone, otherwise terminate
+    networks_available = api.listNetworks({'region': vdcRegion, 'zoneid': zone_id})
+    if networks_available['count']==0:
+        print("ERROR: There are no networks in the selected zone. You must create a network to deploy a virtual machine.")
+        sys.exit("FATAL: Program terminating")
+
     # STEP: Select the template or ISO image
     if deployFromISO:
        print("Error: ISO case not implemented yet")
@@ -165,9 +170,8 @@ if __name__ == '__main__':
        print("Error: Select affinity groups not implemented yet, ignoring and continuing")
 
     # STEP: Select the network(s)
-    result = api.listNetworks({'region': vdcRegion, 'zoneid': zone_id})
-    network_ids = [network['id'] for network in result['network']]
-    networklist = ['%s (%s)' % (network['displaytext'],network['name']) for network in result['network']]
+    network_ids = [network['id'] for network in networks_available['network']]
+    networklist = ['%s (name: %s, subtype: %s)' % (network['displaytext'],network['name'],network['subtype']) for network in networks_available['network']]
     network_num = input("Input the number of networks?: ")
     if network_num == 1:
        choice = choose_item_from_list(networklist, prompt="Select the network from the list? (this will be the default)")
@@ -182,16 +186,91 @@ if __name__ == '__main__':
        print("Selected networks: %s\n" % (network_id))
 
     # (optional) STEP: Select portforwarding ports
-    if askForPortforwarding:
-        print("Error: Portforwarding not finished implementation")
-
+    # Note: the case of multiple public IP addresses on one network is not handled.
+    #  Only the first IP address in the list returned by the API call will be selected
     # 1 check network list for local with gateway network(s)
     # 2 if zero, exit to next step
     # 3 if more than one network, ask for selection
+    # 3a show existing porforwarding rules for the (selected) network
     # 4 ask for number of portforwardings rules
-    # 5 for each rule, ask for public port and private port            
-                        
-                    
+    # 5 for each portwarding rule, ask for public port and private port; NOT DONE!! reject if rule exists for the public port
+
+    if askForPortforwarding and mode=='print' and printFormat=='url':
+        print("Warning: URL output for portforwarding rules cannot be generated because the signatures cannot be calculated.\nSkipping the portforwarding rule step...")
+        askForPortforwarding = False
+    
+    if askForPortforwarding:
+        networks_selected = {}
+        for netid in network_id.split(','):
+            networks_selected[netid] = {}
+            tempnet = api.listNetworks({'region': vdcRegion, 'id':netid})['network'][0]
+            if tempnet['subtype'] == 'internetgateway':
+               networks_selected[netid]['network'] = tempnet
+               try:
+                   ipaddress_id = api.listPublicIpAddresses({'region': vdcRegion, 'associatednetworkid':netid})['publicipaddress'][0]['id']
+                   networks_selected[netid]['ipaddressid'] = ipaddress_id
+                   try:
+                       networks_selected[netid]['pfrules'] = api.listPortForwardingRules({'region': vdcRegion, 'ipaddressid':ipaddress_id})['portforwardingrule']
+                       networks_selected[netid]['noPFRules'] = False
+                       networks_selected[netid]['noPublicIP'] = False
+                   except KeyError:
+                       networks_selected[netid]['ipaddressid'] = 'null'
+                       networks_selected[netid]['noPFRules'] = True
+                       networks_selected[netid]['noPublicIP'] = False
+                       networks_selected[netid]['pfrules'] = []
+               except KeyError:
+                   print("Warning: Network \'%s\' does not have an associated public IP address" % (networks_selected[netid]['network']['displaytext']))
+                   networks_selected[netid]['noPublicIP'] = True
+                   networks_selected[netid]['noPFRules'] = True
+                   networks_selected[netid]['pfrules'] = []
+        if all(map(lambda x: not(x), networks_selected.values())):
+            print("ERROR: You have not selected any internetgateway networks. Portforwarding rules cannot be created.")
+            askForPortforwarding = False
+        elif all(map(lambda x: x['noPublicIP'], [n for n in networks_selected.values() if n != {}])):
+            print("ERROR: You have not selected any internetgateway networks with public IP addresses. Portforwarding rules cannot be created.")
+            askForPortforwarding = False
+        else:
+            # at least one internetgateway network with public IP was found
+            for net in [n for n in networks_selected.values() if n != {}]:
+                print("Portforwarding rules for network \'%s\'" % (net['network']['displaytext']))
+                if not net['noPFRules']: # if there are existing portforwarding rules for this network
+                    print("  The existing rules are: ",end='')
+                    for p in net['pfrules']:
+                            if p['publicport']!=p['publicendport']:
+                                print(" [%s/%s]->"%(p['publicport'],p['publicendport']),end='')
+                            else:
+                                print(" [%s]->"%(p['publicport']),end='')
+                            if p['privateport']!=p['privateendport']:
+                                print("[%s/%s]"%(p['privateport'],p['privateendport']),end='')
+                            else:
+                                print("[%s]"%(p['privateport']),end='')
+                    print(" ")
+                else:
+                    print("  There are no portforwarding rules defined for this network\n")
+                pfrule_num = input("Input the number of portforwarding rules for network %s (0 to skip): " % (net['network']['displaytext']) )
+                netid = net['network']['id']
+                networks_selected[netid]['newpfrules'] = []
+                if pfrule_num > 0:
+                    for i in range(pfrule_num):
+                        print("Enter portforwarding rule %s (TCP protocol is assumed):" % (i+1))
+                        newpublicport = int(input("   publicport: "))
+                        newpublicendport = raw_input("   publicendport (press enter for blank): ")
+                        if newpublicendport == '':
+                            newpublicendport = newpublicport
+                        else:
+                            newpublicendport = int(newpublicendport)
+                        newprivateport = int(input("   privateport: "))
+                        newprivateendport = raw_input("   privateendport (press enter for blank): ")
+                        if newprivateendport == '':
+                            newprivateendport = newprivateport
+                        else:
+                            newprivateendport = int(newprivateendport)
+                        networks_selected[netid]['newpfrules'] = networks_selected[netid]['newpfrules'] + [{"protocol":"tcp", "publicport":newpublicport,
+                           "publicendport":newpublicendport, "privateport":newprivateport, "privateendport":newprivateendport,
+                           "ipaddressid": networks_selected[netid]['ipaddressid']}]
+                else:
+                    #no newpfrules for this network
+                    print("No new portforwarding rules")
    
     # (optional) STEP: Select keys
     if askForSSHKeys:
@@ -263,11 +342,6 @@ if __name__ == '__main__':
     if displayname == '':
         deploy_params.pop('displayname')
 
-
-    if askForPortforwarding:
-        print("Error: Portforwarding not finished implementation")
-                    
-
     print('')
     if mode=='print':
         print("-------------------------------------------\nRequired deploy command in %s format\n-------------------------------------------\n" % (printFormat))
@@ -315,4 +389,35 @@ if __name__ == '__main__':
         if choice=="d" or choice=="D":
            result = api.deployVirtualMachine(deploy_params)
            job_id = result['jobid']
-           pprint.pprint(api.wait_for_job(job_id))
+           job_result = api.wait_for_job(job_id)
+           pprint.pprint(job_result)
+
+    if askForPortforwarding:
+        pfrule_params_list = []
+        for netid in network_id.split(','):
+            for pfruledict in networks_selected[netid]['pfrules']:
+                pfrule_params_list = pfrule_params_list + pfruledict
+        print('')
+        if mode=='print':                                                                       
+           print("-------------------------------------------\nPortforwarding commands in %s format\n-------------------------------------------\n" % (printFormat))
+           if printFormat=='json':
+              print(json.dumps(pfrule_params_list))
+              print('')
+           elif printFormat=='cloudmonkey':
+              # for Cloudmonkey, 'region' is set by a separate command
+              deploy_params.pop('region')  
+              params = ["%s=%s" % (key, deploy_params[key]) for key in deploy_params]
+              print("NOTE: you need to execute the command 'set region %s' for the following commands to work...\n" % (vdcRegion))
+              print("create portforwardingrule " + " ".join(params))
+              print('')
+               
+        else:
+           print("Ready to execute portforwarding rule creation for the following rules:")
+           pprint.pprint(json.dumps(deploy_params))
+           choice = raw_input("Input D to deploy or any other key to exit:")
+           if choice=="d" or choice=="D":
+              result = api.deployVirtualMachine(deploy_params)
+              job_id = result['jobid']
+              pprint.pprint(api.wait_for_job(job_id))
+        
+                    

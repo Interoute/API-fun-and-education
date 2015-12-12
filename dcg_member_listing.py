@@ -105,11 +105,11 @@ if __name__ == '__main__':
         print("\nDirect Connect Groups for the account '%s' checked at %s:"
             % (api.getApiLimit({})['apilimit']['account'], checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
         if len(vdcRegions)==3:
-            print("All VDC regions are being scanned for attached networks")
+            print("\n** All VDC regions are being scanned for Private Direct Connect networks")
         else:
-            print("\n** Only these regions will be scanned and the attached PrivateDirectConnect networks shown: %s" % (vdcRegions))
+            print("\n** Only these regions will be scanned and their Private Direct Connect networks shown: %s" % (vdcRegions))
         print("\n** Networks which have 'isprovisioned' set to False are labelled with '/NotProv/' and are not functional")
-        print("** Output will not be correct for DCGs and networks that were not created with NetworkAPI functions because\n** these are missing the information in the listNetworks call which identifies the DCG membership of the network\n") 
+        print("** Output may not be correct for DCGs and networks that were not created with NetworkAPI functions because\n** they may be missing the information in the listNetworks call which identifies the DCG membership of the network\n") 
         for d in dcgList['directconnectgroups']:
             print(" "+unichr(0x2015)+' \'%s\' (dcgid: %s)' % (d['name'], d['id']))
             members = []
