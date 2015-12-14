@@ -12,6 +12,7 @@
 # or returns JSON parameter data or Cloudmonkey command or runnable URL to perform the deployment
 #
 # Optional: execute or return commands to create portforwarding rules for ingress to the virtual machine
+# Next improvements for portforwarding: check for conflicts on public ports; stronger error check and diagnosis
 #
 # You can pass options via the command line: type 'python vm_deploy_chooser.py -h'
 # for usage information
@@ -389,35 +390,48 @@ if __name__ == '__main__':
         if choice=="d" or choice=="D":
            result = api.deployVirtualMachine(deploy_params)
            job_id = result['jobid']
-           job_result = api.wait_for_job(job_id)
-           pprint.pprint(job_result)
+           job_result_vm = api.wait_for_job(job_id)
+           pprint.pprint(job_result_vm)
 
     if askForPortforwarding:
         pfrule_params_list = []
         for netid in network_id.split(','):
-            for pfruledict in networks_selected[netid]['pfrules']:
-                pfrule_params_list = pfrule_params_list + pfruledict
+            for pfruledict in networks_selected[netid]['newpfrules']:
+                pfruledict['enablefirewall'] = 'true'
+                pfruledict['region'] = vdcRegion
+                pfrule_params_list = pfrule_params_list + [pfruledict]
         print('')
         if mode=='print':                                                                       
-           print("-------------------------------------------\nPortforwarding commands in %s format\n-------------------------------------------\n" % (printFormat))
+           print("-------------------------------------------\nPortforwarding command(s) in %s format\n-------------------------------------------\n" % (printFormat))
+           print("NOTE: The parameter \'virtualmachineid\' must be added to these commands, after the virtual machine has been deployed.\n")
            if printFormat=='json':
               print(json.dumps(pfrule_params_list))
               print('')
            elif printFormat=='cloudmonkey':
-              # for Cloudmonkey, 'region' is set by a separate command
-              deploy_params.pop('region')  
-              params = ["%s=%s" % (key, deploy_params[key]) for key in deploy_params]
               print("NOTE: you need to execute the command 'set region %s' for the following commands to work...\n" % (vdcRegion))
-              print("create portforwardingrule " + " ".join(params))
-              print('')
-               
+              for pfruleparams in pfrule_params_list:
+                  # for Cloudmonkey, 'region' is set by a separate command
+                  pfruleparams.pop('region')  
+                  params = ["%s=%s" % (key, pfruleparams[key]) for key in pfruleparams]
+                  print("create portforwardingrule " + " ".join(params))
+                  print('')
         else:
            print("Ready to execute portforwarding rule creation for the following rules:")
-           pprint.pprint(json.dumps(deploy_params))
-           choice = raw_input("Input D to deploy or any other key to exit:")
-           if choice=="d" or choice=="D":
-              result = api.deployVirtualMachine(deploy_params)
-              job_id = result['jobid']
-              pprint.pprint(api.wait_for_job(job_id))
+           pprint.pprint(json.dumps(pfrule_params_list))
+           choice = raw_input("Input E to execute or any other key to exit:")
+           if choice=="e" or choice=="E":
+              vm_id = job_result_vm['virtualmachine']['id']
+              rulenum = 0
+              for pfruleparams in pfrule_params_list:
+                 rulenum += 1
+                 print("Create portforwarding rule %d:" % (rulenum))
+                 pfruleparams['virtualmachineid'] = vm_id
+                 try:
+                    result_pf = api.createPortForwardingRule(pfruleparams)
+                    job_id_pf = result_pf['jobid']
+                    pprint.pprint(api.wait_for_job(job_id_pf))
+                 except:
+                    print("Error in creating portforwarding rule %d" % (rulenum))
+              print("End of creating portforwarding rules")
         
                     
