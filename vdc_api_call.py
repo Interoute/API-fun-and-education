@@ -41,18 +41,19 @@ class VDCApiCall(object):
 
         request = zip(args.keys(), args.values())
         request.sort(key=lambda x: x[0].lower())
-        request_data = "&".join(["=".join([r[0], urllib.quote_plus(str(r[1]))])
+        request_data = "&".join(["=".join([r[0], urllib.quote_plus(str(r[1]),safe='*')])
                                 for r in request])
         hashStr = "&".join(
             [
                 "=".join(
                     [r[0].lower(),
-                     str.lower(urllib.quote_plus(str(r[1]))).replace(
+                     str.lower(urllib.quote_plus(str(r[1]),safe='*')).replace(
                          "+", "%20"
                      )]
                 ) for r in request
             ]
         )
+
         sig = urllib.quote_plus(base64.b64encode(
             hmac.new(
                 self.secret,
@@ -62,6 +63,8 @@ class VDCApiCall(object):
         ).strip())
 
         request_data += "&signature=%s" % sig
+        # print the URL string for debug
+        ###print(request_data)
 
         try:
             connection = urllib2.urlopen(self.api_url + "?" + request_data ) # GET request
