@@ -8,7 +8,7 @@
 # You can pass options via the command line: type 'python networks_member_listing.py -h'
 # for usage information
 #
-# Copyright (C) Interoute Communications Limited, 2015
+# Copyright (C) Interoute Communications Limited, 2016
 
 from __future__ import print_function
 import vdc_api_call as vdc
@@ -103,12 +103,17 @@ if __name__ == '__main__':
                   network['cidr']
                 ), end='')
                
-            #FIND EXTERNAL IP ADDRESS IF EXISTS
+            #FIND EXTERNAL IP ADDRESSES IF THEY EXIST FOR THE NETWORK
             testdict=request
             testdict['associatednetworkid']=network['id']
             external_IP=api.listPublicIpAddresses(testdict)
             if external_IP != {}:
-               print(", IP: %s)" % external_IP['publicipaddress'][0]['ipaddress'])
+               if external_IP['count']==1:
+                  print(", IP: %s)" % external_IP['publicipaddress'][0]['ipaddress'])
+               else: # more than one public IP address for this network
+                  for n in range(0,external_IP['count']):
+                     print(", IP%s: %s" % (n+1, external_IP['publicipaddress'][n]['ipaddress']), end='')
+                  print(")")
             else:
                print(")")
             members = []
@@ -124,7 +129,13 @@ if __name__ == '__main__':
                 diagfile.write('network %s_Z_%s {\n address=\"%s\"\n' % (str(network['name']).translate(nameStringSubs),
                        network['zonename'].split()[0], network['cidr']))
                 if external_IP != {}:
-                    diagfile.write(' VDC [address=\"IP %s\"]\n' % (external_IP['publicipaddress'][0]['ipaddress']))
+                   if external_IP['count']==1:
+                      diagfile.write(' VDC [address=\"IP %s\"]\n' % (external_IP['publicipaddress'][0]['ipaddress']))
+                   else: # more than one public IP address for this network
+                      diagfile.write(' VDC [address=\"IP ')
+                      for n in range(0,external_IP['count']-1):
+                         diagfile.write('%s, ' % (external_IP['publicipaddress'][n]['ipaddress']))
+                      diagfile.write('%s\"]\n' % (external_IP['publicipaddress'][-1]['ipaddress']))
                 members.sort() # VMs will be sorted by the last segment of their IP address (=first element of each members list)
                 for i in range(len(members)):
                     ###print("DEBUG: %s" % members[i])
@@ -150,18 +161,28 @@ if __name__ == '__main__':
                            print("   "+unichr(0x251C)+" %s: '%s' " % (members[i][1],members[i][2]), end='')
                     if external_IP != {}:
                        #check for port forwarding rules
+                       pfRules = []
                        if portForwardingRulesList != {}: # Test if any port-forwarding rules exist
-                          pfRules = [p for p in portForwardingRulesList['portforwardingrule'] if 
-                              p['virtualmachineid']==members[i][3] and p['ipaddress']==external_IP['publicipaddress'][0]['ipaddress']]
-                       else:
-                          pfRules = []
+                          if external_IP['count'] > 1:
+                             externalIpMultiple = True
+                          else:
+                             externalIpMultiple = False
+                          for n in range(0,external_IP['count']): 
+                              pfRules = pfRules + [p for p in portForwardingRulesList['portforwardingrule'] if 
+                                 p['virtualmachineid']==members[i][3] and p['ipaddress']==external_IP['publicipaddress'][n]['ipaddress']] 
                        if pfRules != []:
                           print(" (ports:",end='')
                           for p in pfRules:
-                              if p['publicport']!=p['publicendport']:
-                                 print(" [%s/%s]->"%(p['publicport'],p['publicendport']),end='')
+                              if externalIpMultiple:
+                                 if p['publicport']!=p['publicendport']:
+                                    print(" [%s:%s/%s]->"%(p['ipaddress'],p['publicport'],p['publicendport']),end='')
+                                 else:
+                                    print(" [%s:%s]->"%(p['ipaddress'],p['publicport']),end='')
                               else:
-                                 print(" [%s]->"%(p['publicport']),end='')
+                                 if p['publicport']!=p['publicendport']:
+                                    print(" [%s/%s]->"%(p['publicport'],p['publicendport']),end='')
+                                 else:
+                                    print(" [%s]->"%(p['publicport']),end='')
                               if p['privateport']!=p['privateendport']:
                                  print("[%s/%s]"%(p['privateport'],p['privateendport']),end='')
                               else:
