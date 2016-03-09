@@ -395,7 +395,7 @@ if __name__ == '__main__':
 
     if askForPortforwarding:
         pfrule_params_list = []
-        for netid in network_id.split(','):
+        for netid in [nid for nid in network_id.split(',') if networks_selected[nid] != {}]:
             for pfruledict in networks_selected[netid]['newpfrules']:
                 pfruledict['enablefirewall'] = 'true'
                 pfruledict['region'] = vdcRegion
