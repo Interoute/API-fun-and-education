@@ -12,6 +12,7 @@
 
 from __future__ import print_function
 import vdc_api_call as vdc
+import sys
 import getpass
 import json
 import os
@@ -60,6 +61,11 @@ if __name__ == '__main__':
     request = {'region': vdcRegion}
     try:
        networksList = api.listNetworks(request)
+       if zonenameFilter:
+          networksList['network'] = [network for network in networksList['network'] if re.search('\A'+zonenameFilter,network['zonename'])]
+          if networksList['network'] == []:
+             print("ERROR: No networks found when using the zonename filter \'%s\'." % zonenameFilter)
+             sys.exit("FATAL: Program terminating")
     except KeyError:
        print("Error: No networks found", file=sys.stderr)
     try: 
@@ -75,8 +81,6 @@ if __name__ == '__main__':
        portForwardingRulesList = {}
        pass 
 
-    if zonenameFilter:
-       networksList['network'] = [network for network in networksList['network'] if re.search('\A'+zonenameFilter,network['zonename'])]
 
     # STEP 5: Process the information from the API calls
     nameStringSubs = string.maketrans(" -","__")
