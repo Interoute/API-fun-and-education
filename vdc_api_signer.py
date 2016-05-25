@@ -34,12 +34,15 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
                     help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
     parser.add_argument("-x", "--command", help="API command name")
-    parser.add_argument("-a", "--arguments", type=json.loads, default='{}', help="Arguments for the API command (you must use single quotes outside, double quotes inside)")
-    parser.add_argument("-e", "--execute", action='store_true', help="Execute the API call")
+    parser.add_argument("-a", "--arguments", type=json.loads, default='{}', help="arguments for the API command (you must use single quotes outside, double quotes inside)")
+    parser.add_argument("-e", "--execute", action='store_true', help="execute the API call")
+    parser.add_argument("-m", "--method", choices=['GET','POST'], default='GET',
+                        help="specify the HTTP request method: GET (default) or POST")
     config_file = parser.parse_args().config
     command = parser.parse_args().command
     args = parser.parse_args().arguments
     executeCall = parser.parse_args().execute
+    httpMethod = parser.parse_args().method
     
     # If config file is found, read its content,
     # else query user for the API endpoint URL, API key, Secret key
@@ -56,8 +59,6 @@ if __name__ == '__main__':
         print('API key:', end='')
         apiKey = raw_input()
         secret = getpass.getpass(prompt='API secret key:')
-
-    ##args = json.loads(args_string)
 
     args['apiKey'] = apiKey
     args['response'] = 'json'
@@ -93,8 +94,10 @@ if __name__ == '__main__':
 
     if executeCall:
        try:
-           connection = urllib2.urlopen(api_url + '?' + request_data) # GET request
-           ##connection = urllib2.urlopen(api_url, request_data) # POST request
+           if httpMethod == 'GET':
+              connection = urllib2.urlopen(api_url + '?' + request_data)
+           else: # POST request
+              connection = urllib2.urlopen(api_url, request_data) 
            response = connection.read()
        except urllib2.HTTPError as error:
            print('HTTP Error: %s' % error.code)
