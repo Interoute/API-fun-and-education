@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Python program to generate a VDC API authentication signature
+# Python program to generate a VDC API authentication signature and runnable URL, and optionally execute the call
 # 
 # For download and information: https://github.com/Interoute/API-fun-and-education
 
@@ -38,11 +38,13 @@ if __name__ == '__main__':
     parser.add_argument("-e", "--execute", action='store_true', help="execute the API call")
     parser.add_argument("-m", "--method", choices=['GET','POST'], default='GET',
                         help="specify the HTTP request method: GET (default) or POST")
+    parser.add_argument("-o", "--outfile", default="", help="name of output file to receive the API call response") 
     config_file = parser.parse_args().config
     command = parser.parse_args().command
     args = parser.parse_args().arguments
     executeCall = parser.parse_args().execute
     httpMethod = parser.parse_args().method
+    outfile = parser.parse_args().outfile
     
     # If config file is found, read its content,
     # else query user for the API endpoint URL, API key, Secret key
@@ -115,5 +117,11 @@ if __name__ == '__main__':
            print(description)
            sys.exit()
 
-       print("Response:\n %s" % response)
+       if outfile:
+           fhout = open(outfile, 'w')
+           fhout.write("# API CALL:\n# %s\n#" % (api_url + '?' + request_data))
+           fhout.write("\n%s" % response)
+           fhout.close()
+       else:
+           print("Response:\n %s" % response)
 
