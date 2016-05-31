@@ -403,15 +403,21 @@ if __name__ == '__main__':
         print('')
         if mode=='print':                                                                       
            print("-------------------------------------------\nPortforwarding command(s) in %s format\n-------------------------------------------\n" % (printFormat))
-           print("NOTE: The parameter \'virtualmachineid\' must be added to these commands, after the virtual machine has been deployed.\n")
+           print("REQUIRED!: Insert the UUID for \'virtualmachineid\', after the virtual machine has been deployed.\n")
+           # for print output, add 'virtualmachineid' with a placeholder for each params dict
+           pfrule_params_list_add_vmid = []
+           for pfruleparams in pfrule_params_list:
+               pfr = pfruleparams.copy()
+               pfr.update({'virtualmachineid' : 'X-VMID-X'})
+               pfrule_params_list_add_vmid = pfrule_params_list_add_vmid + [pfr]
            if printFormat=='json':
-              print(json.dumps(pfrule_params_list))
+              print(json.dumps(pfrule_params_list_add_vmid))
               print('')
            elif printFormat=='cloudmonkey':
               print("NOTE: you need to execute the command 'set region %s' for the following commands to work...\n" % (vdcRegion))
-              for pfruleparams in pfrule_params_list:
+              for pfruleparams in pfrule_params_list_add_vmid:
                   # for Cloudmonkey, 'region' is set by a separate command
-                  pfruleparams.pop('region')  
+                  pfruleparams.pop('region')
                   params = ["%s=%s" % (key, pfruleparams[key]) for key in pfruleparams]
                   print("create portforwardingrule " + " ".join(params))
                   print('')
