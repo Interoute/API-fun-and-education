@@ -27,6 +27,7 @@ import urllib2
 import getpass
 import os
 import argparse
+import datetime
 
 if __name__ == '__main__':
     # Parse command line arguments
@@ -39,12 +40,16 @@ if __name__ == '__main__':
     parser.add_argument("-m", "--method", choices=['GET','POST'], default='GET',
                         help="specify the HTTP request method: GET (default) or POST")
     parser.add_argument("-o", "--outfile", default="", help="name of output file to receive the API call response") 
+    parser.add_argument("-t", "--timeout", action="store_true", help="add expiry timeout to the API call URL (see -u for setting expiry time")
+    parser.add_argument("-u", "--expiryTime", type=int, default=3600, help="expiry time duration for the API call in seconds (default: 3600s)")
     config_file = parser.parse_args().config
     command = parser.parse_args().command
     args = parser.parse_args().arguments
     executeCall = parser.parse_args().execute
     httpMethod = parser.parse_args().method
     outfile = parser.parse_args().outfile
+    timeoutOn = parser.parse_args().timeout
+    expiryTimeout = parser.parse_args().expiryTime
     
     # If config file is found, read its content,
     # else query user for the API endpoint URL, API key, Secret key
@@ -65,6 +70,12 @@ if __name__ == '__main__':
     args['apiKey'] = apiKey
     args['response'] = 'json'
     args['command'] = command
+
+    #add expiry timeout to the API call
+    if timeoutOn:
+       expireTime = datetime.datetime.utcnow() + datetime.timedelta(seconds = expiryTimeout)
+       args['signatureVersion'] = 3
+       args['expires'] = expireTime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")[:-7] + "+0000"
 
     request = zip(args.keys(), args.values())
     request.sort(key=lambda x: x[0].lower())
