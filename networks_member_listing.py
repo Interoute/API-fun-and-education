@@ -28,15 +28,18 @@ if __name__ == '__main__':
                     help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
     parser.add_argument("-r", "--region", choices=['Europe','europe','USA','usa','Asia','asia'],
                     default='Europe', help="specify the VDC region: Europe, USA or Asia (default Europe)")
+    parser.add_argument("-w", "--writediag", action='store_true', help="write a diag file for use with nwdiag")
     parser.add_argument("-f", "--diagfile", default='VDC-network-data.diag',
                     help="name of the output diag file for use with nwdiag")
     parser.add_argument("-z", "--zone", help="filter results by zone name (match by initial characters) ")
     parser.add_argument("-v", "--vmstate", action='store_true', help="display VM state by text colour")
     vdcRegion = parser.parse_args().region
-    diagfileName = parser.parse_args().diagfile
+    writeDiag = parser.parse_args().writediag
     config_file = parser.parse_args().config
     zonenameFilter = parser.parse_args().zone
     showVmState =  parser.parse_args().vmstate
+    if writeDiag:
+       diagfileName = parser.parse_args().diagfile
 
     # STEP 2: If config file is found, read its content,
     # else query user for the URL, API key, Secret key
@@ -85,9 +88,10 @@ if __name__ == '__main__':
     # STEP 5: Process the information from the API calls
     nameStringSubs = string.maketrans(" -","__")
     try:
-        diagfile = open(diagfileName, 'w')
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
-        diagfile.write('nwdiag {\n internet [shape=cloud]\n VDC [shape=cloud] \n internet -- VDC\n')
+        if writeDiag:
+           diagfile = open(diagfileName, 'w')
+           diagfile.write('nwdiag {\n internet [shape=cloud]\n VDC [shape=cloud] \n internet -- VDC\n')
         print("\nNetwork configuration for the account '%s' in VDC region '%s' checked at %s:" 
             % (networksList['network'][0]['domain'],vdcRegion,checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
         if zonenameFilter:
@@ -130,16 +134,17 @@ if __name__ == '__main__':
             if len(members)>0:
                 #For nwdiag, network name has zone city appended
                 #(this is helpful because default VDC network names are same in all zones)
-                diagfile.write('network %s_Z_%s {\n address=\"%s\"\n' % (str(network['name']).translate(nameStringSubs),
-                       network['zonename'].split()[0], network['cidr']))
-                if external_IP != {}:
-                   if external_IP['count']==1:
-                      diagfile.write(' VDC [address=\"IP %s\"]\n' % (external_IP['publicipaddress'][0]['ipaddress']))
-                   else: # more than one public IP address for this network
-                      diagfile.write(' VDC [address=\"IP ')
-                      for n in range(0,external_IP['count']-1):
-                         diagfile.write('%s, ' % (external_IP['publicipaddress'][n]['ipaddress']))
-                      diagfile.write('%s\"]\n' % (external_IP['publicipaddress'][-1]['ipaddress']))
+                if writeDiag:
+                   diagfile.write('network %s_Z_%s {\n address=\"%s\"\n' % (str(network['name']).translate(nameStringSubs),
+                      network['zonename'].split()[0], network['cidr']))
+                   if external_IP != {}:
+                      if external_IP['count']==1:
+                         diagfile.write(' VDC [address=\"IP %s\"]\n' % (external_IP['publicipaddress'][0]['ipaddress']))
+                      else: # more than one public IP address for this network
+                         diagfile.write(' VDC [address=\"IP ')
+                         for n in range(0,external_IP['count']-1):
+                            diagfile.write('%s, ' % (external_IP['publicipaddress'][n]['ipaddress']))
+                         diagfile.write('%s\"]\n' % (external_IP['publicipaddress'][-1]['ipaddress']))
                 members.sort() # VMs will be sorted by the last segment of their IP address (=first element of each members list)
                 for i in range(len(members)):
                     ###print("DEBUG: %s" % members[i])
@@ -193,13 +198,16 @@ if __name__ == '__main__':
                                  print("[%s]"%(p['privateport']),end='')
                           print(")",end='')
                     print(" ")
-                    diagfile.write('\"%s\" [address=\"%s\"];\n' % (str(members[i][2]).translate(nameStringSubs),members[i][1]))
-                diagfile.write('}\n')
+                    if writeDiag:
+                       diagfile.write('\"%s\" [address=\"%s\"];\n' % (str(members[i][2]).translate(nameStringSubs),members[i][1]))
+                if writeDiag:
+                   diagfile.write('}\n')
             else:
                 print("   *(NO MEMBERS)")
             print(" ")
-        diagfile.write("}\n")
-        diagfile.close()
+        if writeDiag:
+           diagfile.write("}\n")
+           diagfile.close()
                 
     except KeyError:
         # if no network exists, " networksList['network'] " will raise exception
