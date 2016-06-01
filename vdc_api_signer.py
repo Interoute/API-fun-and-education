@@ -40,7 +40,7 @@ if __name__ == '__main__':
     parser.add_argument("-m", "--method", choices=['GET','POST'], default='GET',
                         help="specify the HTTP request method: GET (default) or POST")
     parser.add_argument("-o", "--outfile", default="", help="name of output file to receive the API call response") 
-    parser.add_argument("-t", "--timeout", action="store_true", help="add expiry timeout to the API call URL (see -u for setting expiry time")
+    parser.add_argument("-t", "--timeout", action="store_true", help="add expiry timeout to the API call URL (see -u for setting expiry time)")
     parser.add_argument("-u", "--expiryTime", type=int, default=3600, help="expiry time duration for the API call in seconds (default: 3600s)")
     config_file = parser.parse_args().config
     command = parser.parse_args().command
@@ -103,7 +103,10 @@ if __name__ == '__main__':
 
     request_data +=  "&signature=%s" % sig
 
-    print("Runnable URL:\n%s" % api_url + '?' + request_data)
+    if timeoutOn:
+       print("Runnable URL (expires after %d seconds): \n%s" % (expiryTimeout, api_url + '?' + request_data))
+    else:
+       print("Runnable URL: \n%s" % (api_url + '?' + request_data))
 
     if executeCall:
        try:
