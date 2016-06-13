@@ -136,6 +136,9 @@ if __name__ == '__main__':
     if networks_available['count']==0:
         print("ERROR: There are no networks in the selected zone. You must create a network to deploy a virtual machine.")
         sys.exit("FATAL: Program terminating")
+    # If 'subtype' is not in the API call response then add the keypair 'subtype':'unknown' to all network dicts in networks_available
+    if 'subtype' not in networks_available['network'][0].keys():
+        [netwk.update({'subtype':'unknown'}) for netwk in networks_available['network']]
 
     # STEP: Select the template or ISO image
     if deployFromISO:
