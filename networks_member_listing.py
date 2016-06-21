@@ -138,7 +138,7 @@ if __name__ == '__main__':
                for l in lbRulesForNetwork:
                   print("   LB: '%s', IP: %s, ports: [%s]->[%s], state: " % (l['name'], l['publicip'], l['publicport'], l['privateport']), end='')
                   try:
-                      lVM = api.listLoadBalancerRuleInstances({'id':l['id']})
+                      lVM = api.listLoadBalancerRuleInstances({'id':l['id'], 'region':vdcRegion})
                       print("%d VM" % lVM['count'])
                       # *** POSSIBLE ADDITION: print list of VM IP addresses
                       vmListIds = [lv['id'] for lv in lVM['loadbalancerruleinstance']]
