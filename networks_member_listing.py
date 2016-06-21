@@ -88,6 +88,7 @@ if __name__ == '__main__':
     except KeyError:
        print("Note: No loadbalancer rules found for this account")
        loadBalancerRulesList = {}
+       lbRulesWithVM = []
        pass 
 
 
@@ -131,19 +132,20 @@ if __name__ == '__main__':
             else:
                print(")")
             #GET AND PRINT LOADBALANCER RULES
-            lbRulesForNetwork = [lbr for lbr in loadBalancerRulesList['loadbalancerrule'] if lbr['networkid']==network['id']]
             lbRulesWithVM = []
-            for l in lbRulesForNetwork:
-               print("   LB: '%s', IP: %s, ports: [%s]->[%s], state: " % (l['name'], l['publicip'], l['publicport'], l['privateport']), end='')
-               try:
-                   lVM = api.listLoadBalancerRuleInstances({'id':l['id']})
-                   print("%d VM" % lVM['count'])
-                   # *** POSSIBLE ADDITION: print list of VM IP addresses
-                   vmListIds = [lv['id'] for lv in lVM['loadbalancerruleinstance']]
-                   lbRulesWithVM = lbRulesWithVM + [{'publicip':l['publicip'], 'publicport':l['publicport'], 'privateport':l['privateport'], 'vmlist':vmListIds}]
-               except KeyError:
-                   print("EMPTY")
-                   pass
+            if loadBalancerRulesList != {}:
+               lbRulesForNetwork = [lbr for lbr in loadBalancerRulesList['loadbalancerrule'] if lbr['networkid']==network['id']]
+               for l in lbRulesForNetwork:
+                  print("   LB: '%s', IP: %s, ports: [%s]->[%s], state: " % (l['name'], l['publicip'], l['publicport'], l['privateport']), end='')
+                  try:
+                      lVM = api.listLoadBalancerRuleInstances({'id':l['id']})
+                      print("%d VM" % lVM['count'])
+                      # *** POSSIBLE ADDITION: print list of VM IP addresses
+                      vmListIds = [lv['id'] for lv in lVM['loadbalancerruleinstance']]
+                      lbRulesWithVM = lbRulesWithVM + [{'publicip':l['publicip'], 'publicport':l['publicport'], 'privateport':l['privateport'], 'vmlist':vmListIds}]
+                  except KeyError:
+                      print("EMPTY")
+                      pass
             #PRINT LIST OF MEMBER VMs
             members = []
             if vmList != {}:
