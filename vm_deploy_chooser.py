@@ -48,7 +48,9 @@ def choose_item_from_list(itemlist, prompt='Please select an item by its number'
     item_display_list = ["%2d. %s" % (key, item_dict[key]) for key in item_dict] 
     column_print(item_display_list)
     print('')
-    response = int(input(prompt))
+    response=-1
+    while response not in range(len(itemlist)):
+       response = int(input(prompt))
     return {'itemindex': response, 'itemcontent': item_dict[response]}
 
 # Print a list by columns. Source: 'col_print' at http://stackoverflow.com/questions/1524126/how-to-print-a-list-more-nicely
@@ -161,7 +163,9 @@ if __name__ == '__main__':
 
     # STEP: Select the compute/service offering
     ramlist = [512,1024,2048,4096,6144,8192,16384,24576,32768,65536,131072]
-    choice_cpu = input("Input the number of CPUs? (between 1 and 12): ")
+    choice_cpu = -1
+    while choice_cpu not in range(1,13):
+       choice_cpu = input("Input the number of CPUs? (between 1 and 12): ")
     print('')
     print("RAM MEMORY:")
     choice_ram = choose_item_from_list(map(lambda x: float(x)/1024, ramlist), prompt="Select the amount of RAM (GBytes)?")
@@ -176,7 +180,9 @@ if __name__ == '__main__':
     # STEP: Select the network(s)
     network_ids = [network['id'] for network in networks_available['network']]
     networklist = ['%s (name: %s, subtype: %s)' % (network['displaytext'],network['name'],network['subtype']) for network in networks_available['network']]
-    network_num = input("Input the number of networks?: ")
+    network_num = -1
+    while network_num not in range(1,len(networklist)+1):
+       network_num = int(input("Input the number of networks? %s: " % range(1,len(networklist)+1)))
     if network_num == 1:
        choice = choose_item_from_list(networklist, prompt="Select the network from the list? (this will be the default)")
        network_id = network_ids[choice['itemindex']]
@@ -251,7 +257,9 @@ if __name__ == '__main__':
                     print(" ")
                 else:
                     print("  There are no portforwarding rules defined for this network\n")
-                pfrule_num = input("Input the number of portforwarding rules for network %s (0 to skip): " % (net['network']['displaytext']) )
+                pfrule_num = -1
+                while pfrule_num < 0:
+                   pfrule_num = int(input("Input the number of portforwarding rules for network %s (0 to skip): " % (net['network']['displaytext'])))
                 netid = net['network']['id']
                 networks_selected[netid]['newpfrules'] = []
                 if pfrule_num > 0:
