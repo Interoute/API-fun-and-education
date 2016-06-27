@@ -119,16 +119,19 @@ if __name__ == '__main__':
                 ), end='')
                
             #FIND EXTERNAL IP ADDRESSES IF THEY EXIST FOR THE NETWORK
-            testdict=request
-            testdict['associatednetworkid']=network['id']
-            external_IP=api.listPublicIpAddresses(testdict)
-            if external_IP != {}:
-               if external_IP['count']==1:
-                  print(", IP: %s)" % external_IP['publicipaddress'][0]['ipaddress'])
-               else: # more than one public IP address for this network
-                  for n in range(0,external_IP['count']):
-                     print(", IP%s: %s" % (n+1, external_IP['publicipaddress'][n]['ipaddress']), end='')
-                  print(")")
+            if network['subtype']=='internetgateway':
+               testdict=request
+               testdict['associatednetworkid']=network['id']
+               external_IP=api.listPublicIpAddresses(testdict)
+               if external_IP != {}:
+                  if external_IP['count']==1:
+                     print(", IP: %s)" % external_IP['publicipaddress'][0]['ipaddress'])
+                  else: # more than one public IP address for this network
+                     for n in range(0,external_IP['count']):
+                        print(", IP%s: %s" % (n+1, external_IP['publicipaddress'][n]['ipaddress']), end='')
+               else:
+                  print(", IP: UNALLOCATED", end='')
+               print(")")
             else:
                print(")")
             #GET AND PRINT LOADBALANCER RULES

@@ -90,7 +90,8 @@ if __name__ == '__main__':
                 ) for r in request
             ]
         )
-
+    ##print("Request string to be hashed: %s" % hashStr)
+    ##print("Base64 encoded signature (HMAC-SHA1): %s" %  base64.b64encode(hmac.new(secret,hashStr,hashlib.sha1).digest()))
     sig = urllib.quote_plus(base64.b64encode(
             hmac.new(
                 secret,
@@ -99,7 +100,7 @@ if __name__ == '__main__':
             ).digest()
         ).strip())
 
-    print("Calculated signature: %s" % sig)
+    print("Calculated VDC signature: %s" % sig)
 
     request_data +=  "&signature=%s" % sig
 
