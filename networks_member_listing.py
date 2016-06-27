@@ -129,9 +129,9 @@ if __name__ == '__main__':
                   else: # more than one public IP address for this network
                      for n in range(0,external_IP['count']):
                         print(", IP%s: %s" % (n+1, external_IP['publicipaddress'][n]['ipaddress']), end='')
+                     print(")")
                else:
-                  print(", IP: UNALLOCATED", end='')
-               print(")")
+                  print(", IP: UNALLOCATED)")
             else:
                print(")")
             #GET AND PRINT LOADBALANCER RULES
