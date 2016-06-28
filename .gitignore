@@ -1,11 +1,11 @@
-cluster_deploy*
+Cluster*
 *~
 .#*
 *#
 *.pyc
 *.diag
 config*
-testprog_*
+testprog*
 userdata*.txt
 VDC-network-data*png
 VDC-network-data*svg
