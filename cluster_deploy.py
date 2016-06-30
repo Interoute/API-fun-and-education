@@ -293,13 +293,14 @@ if __name__ == '__main__':
     for z in zonesDict:
        zonesDict[z]['deploycomplete'] = False
        vmName = "VM-" + re.sub('[ ()]','', zonesDict[z]['name']) + "-" + re.sub('[ ()]','', clusterName)
-       if zonesDict[z]['internetnetworkid'] != 'MISSING':
-          netIDs = zonesDict[z]['internetnetworkid'] + "," + zonesDict[z]['privatenetworkid']
-       else:
+       ##if zonesDict[z]['internetnetworkid'] != 'MISSING':
+       if accessMode == 'single' and z != primaryZone:
           netIDs = zonesDict[z]['privatenetworkid']
+       else:
+          netIDs = zonesDict[z]['internetnetworkid'] + "," + zonesDict[z]['privatenetworkid']
           
        try:
-          ##print({'region': zonesDict[z]['region'], 'zoneid':zonesDict[z]['id'],'templateid':zonesDict[z]['templateid'],'serviceofferingid':zonesDict[z]['serviceofferingid'],'name':vmName, 'displayname':vmName, 'networkids':netIDs, 'keypair':keypairName})
+          print("Executing deployVirtualMachine for zone %s" % zonesDict[z]['name'])
           deployResult = api.deployVirtualMachine({'region': zonesDict[z]['region'], 'zoneid':zonesDict[z]['id'],'templateid':zonesDict[z]['templateid'],'serviceofferingid':zonesDict[z]['serviceofferingid'],'name':vmName, 'displayname':vmName, 'networkids':netIDs, 'keypair':keypairName})
           zonesDict[z]['deployjobid'] = deployResult['jobid']
        except:
@@ -329,13 +330,22 @@ if __name__ == '__main__':
              if 'jobresult' in result:
                 countdown = countdown - 1
                 zonesDict[z]['deploycomplete'] = True
-                ##zonesDict[z]['privateipaddress']
-                ## if zonesDict[z]['internetnetworkid'] != 'MISSING' : zonesDict[z]['publicipaddress']
+                vmNics = result['jobresult']['virtualmachine']['nic']
+                zonesDict[z]['privateipaddress'] = [net for net in vmNics if net['networkid']==zonesDict[z]['privatenetworkid']][0]['ipaddress']
+                ##if zonesDict[z]['internetnetworkid'] != 'MISSING':
+                if accessMode == 'single' and z != primaryZone:
+                   zonesDict[z]['internetipaddress'] = 'MISSING'
+                   zonesDict[z]['publicipaddress'] = 'MISSING'        
+                else:
+                   zonesDict[z]['internetipaddress'] = [net for net in vmNics if net['networkid']==zonesDict[z]['internetnetworkid']][0]['ipaddress']
+                   ipdata = api.listPublicIpAddresses({'region':zonesDict[z]['region'], 'associatednetworkid':zonesDict[z]['internetnetworkid']})['publicipaddress'][0]
+                   zonesDict[z]['publicipaddress'] = ipdata['ipaddress']
+                   zonesDict[z]['publicipaddressid'] = ipdata['id']
                 zonesDict[z]['virtualmachineid'] = result['jobresult']['virtualmachine']['id']
                 zonesDict[z]['virtualmachinename'] = result['jobresult']['virtualmachine']['name']
                 zonesDict[z]['keypair'] = result['jobresult']['virtualmachine']['keypair']
                 print('')
-                print("VM deploy completed in zone %s. %d zones left to compete." % (zonesDict[z]['name'],countdown))
+                print("VM deploy completed in zone %s. %d zones left to complete." % (zonesDict[z]['name'],countdown))
           elif zonesDict[z]['deployjobid'] == 'MISSING':
              countdown = countdown - 1
              zonesDict[z]['deploycomplete'] = True
@@ -349,12 +359,25 @@ if __name__ == '__main__':
           time.sleep(checkDelay)        
     
     # STEP: Create portforwarding rules
-    
-    
+    for z in zonesDict:
+       ##if zonesDict[z]['internetnetworkid'] != 'MISSING':
+       if accessMode != 'single' or (z == primaryZone and accessMode == 'single'):
+          try:
+             print("Executing createPortForwardingRule for zone %s" % zonesDict[z]['name'])
+             pfResult = api.createPortForwardingRule({'region': zonesDict[z]['region'], 'zoneid':zonesDict[z]['id'], 'openfirewall':True, 'publicport':publicPort, 'privateport':22, 'protocol':'TCP', 'virtualmachineid':zonesDict[z]['virtualmachineid'], 'ipaddressid':zonesDict[z]['publicipaddressid']})
+             zonesDict[z]['pfjobid'] = pfResult['jobid']
+          except:
+             print("ERROR: Failure occurred in API call createPortForwardingRule for zone %s" % zonesDict[z]['name'])
+             pass
+
+
+    print("Finished the creation of portforwarding rules. Continuing to next step...")
+                                                        
     # STEP: Output cluster data in JSON format
     print(json.dumps(zonesDict))
     with open(outfile, 'w') as outf:
        json.dump(zonesDict, outf)
+    print("Cluster configuration data written to output file. Program terminating.")
 
 
 

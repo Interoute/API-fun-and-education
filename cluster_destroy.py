@@ -102,7 +102,7 @@ if __name__ == '__main__':
     checkDelay = 2
     displayProgress = True
     destroyAllComplete = False
-    countdown = len(zonesDict)
+    countdown = len(set(zonesDict.keys()) - set(zNotExist))
     while not destroyAllComplete:
        for z in set(zonesDict.keys()) - set(zNotExist):
           if zonesDict[z]['deploycomplete'] and not zonesDict[z]['destroycomplete']:
@@ -114,7 +114,7 @@ if __name__ == '__main__':
                 countdown = countdown - 1
                 zonesDict[z]['destroycomplete'] = True
                 print('')
-                print("VM %s destroyed in zone %s. %d zones left to compete." % (zonesDict[z]['virtualmachineid'],zonesDict[z]['name'],countdown))                
+                print("VM %s destroyed in zone %s. %d zones left to complete." % (zonesDict[z]['virtualmachineid'],zonesDict[z]['name'],countdown))                
        if countdown == 0:
           destroyAllComplete = True
           print("Finished the destruction of virtual machines. Program terminating.")
