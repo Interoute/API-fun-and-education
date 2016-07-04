@@ -4,8 +4,8 @@
 #   Name: cluster_routeadd_ansible.py:
 #   Purpose: Use Ansible to do 'ip route add' for a cluster of virtual machines created by cluster_deploy.py
 #   Requires: class VDCApiCall in the file vdc_api_call.py
-#   Requires: Ansible runnable in the local shell
-#   Requires: Ansible hosts file (see cluster_write_ansiblehosts.py)
+#   Requires: Ansible runnable in the working directory
+#   Requires: Ansible hosts inventory file (see cluster_write_ansiblehosts.py)
 # See the repo: https://github.com/Interoute/API-fun-and-education
 #
 # You can pass options via the command line: type 'python cluster_routeadd_anisble.py -h'
@@ -15,7 +15,7 @@
 #
 # Notes
 #  This program assumes the cluster data provided is healthy and not missing required values
-#  There is no need to provide idempotence in the ansible commands because 'ip route add' will simply fail if a route already exisits
+#  There is no need to create idempotence in the ansible commands because 'ip route add' will simply fail when a route already exisits
 #
 
 from __future__ import print_function
@@ -32,47 +32,28 @@ from subprocess import call
 if __name__ == '__main__':
     # STEP: Parse the command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
-                    help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
     parser.add_argument("-f", "--filename", help="name of input file with the cluster setup information in JSON format")
-    ##parser.add_argument("-x", "--expunge", action='store_true', help="expunge the virtual machines")
-    config_file = parser.parse_args().config
+    parser.add_argument("-i", "--inventory", default="DEFAULT", help="name of hosts inventory file for Ansible")
     datafile = parser.parse_args().filename
-    ##expunge = parser.parse_args().expunge
-    
-    # STEP: If config file is found, read its content,
-    # else query user for the URL, API key, Secret key
-    if os.path.isfile(config_file):
-        with open(config_file) as fh:
-            data = fh.read()
-            config = json.loads(data)
-            api_url = config['api_url']
-            apiKey = config['api_key']
-            secret = config['api_secret']
+    ifile = parser.parse_args().inventory
+    if ifile == 'DEFAULT':
+       inventoryFile = datafile.split('.')[0] + "_ansible_hosts"
     else:
-        print('API url (e.g. http://10.220.18.115:8080/client/api):', end='')
-        api_url = raw_input()
-        print('API key:', end='')
-        apiKey = raw_input()
-        secret = getpass.getpass(prompt='API secret:')
-
-    # STEP: Create the API access object
-    api = vdc.VDCApiCall(api_url, apiKey, secret)
-
+       inventoryFile = ifile
+ 
     # STEP: Load the cluster data from the JSON file
     with open(datafile) as json_file:
        zonesDict = json.load(json_file)
 
     # STEP: If VM has a Local Gateway network then execute Ansible call to modify 'ip route'
+    print("Adding routes for VMs in the cluster with 2 networks...")
     for z in zonesDict:
-       if 'virtualmachineid' not in zonesDict[z].keys():
-          ##### call(["ansible","-i", "ansible_hosts", "SIN1", "-m", "shell", "-a", "ip route add 10.0.0.0/8 via 10.0.107.254"])
+       if zonesDict[z]['internetipaddress'] != 'MISSING':
+          call(["ansible","-i", inventoryFile, zonesDict[z]['virtualmachinename'], "-s", "-a", "ip route add 10.0.0.0/8 via %s" % (zonesDict[z]['privategateway'])])
            
-    # STEP: Use Ansible to check 'ip route' for all VM in the cluster
-    print("Checking 'ip route' for all VMs in the cluster:")
-    for z zonesDict:
-    ##### call(["ansible","-i", "ansible_hosts", "SIN1", "-m", "shell", "-a", "ip route"])
-       print("  VM %s in zone %s" % (zonesDict[z]['virtualmachineid'],zonesDict[z]['name']))
+    # STEP: Use Ansible to check 'ip route' for all VMs in the cluster
+    print("Checking 'ip route' for all VMs in the inventory file...")
+    call(["ansible","-i", inventoryFile, "all", "-m", "shell", "-a", "ip route"])
         
         
 
