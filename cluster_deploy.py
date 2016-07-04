@@ -146,7 +146,6 @@ if __name__ == '__main__':
 
     # STEP: Check and if required create private networks in the zones
     # If there is more than one private DC network in the zone and the DCG, then the first one is selected
-    ###dcgNetworksList = api.listDirectConnectGroups({'id':dcgID})['directconnectgroups'][0]['networks']
     for z in zonesDict:
        zonesDict[z]['clustername'] = clusterName
        privateNetworksInZone = api.listNetworks({'subtype':'privatedirectconnect','zoneid':zonesDict[z]['id'],'region':zonesDict[z]['region']})['network']
@@ -211,8 +210,10 @@ if __name__ == '__main__':
           zonesDict[z]['internetnetworkid'] = internetNetworksInZone[0]['id']
           zonesDict[z]['internetcidr'] = internetNetworksInZone[0]['cidr']
           zonesDict[z]['internetgateway'] = internetNetworksInZone[0]['gateway']
+          zonesDict[z]['publicport'] = publicPort
        else:
           zonesDict[z]['internetnetworkid'] = 'MISSING'
+          zonesDict[z]['publicport'] = 'MISSING'
     zmissing = [zonesDict[z1]['name'] for z1 in zonesDict if zonesDict[z1]['internetnetworkid']=='MISSING']
     print("Internet Gateway networks found in these zones:")
     for z in set(zonesDict.keys()) - set(zmissing):
@@ -221,6 +222,7 @@ if __name__ == '__main__':
        # For accessMode single, there is only one Internet Gateway network required in primaryZone
        if primaryZone in zmissing:
           zmissingcreate = [primaryZone]
+          print("Internet Gateway only to be created in the primary zone %s...." % zonesDict[primaryZone]['name'])
        else:
           zmissingcreate = []  
     else:
@@ -287,6 +289,7 @@ if __name__ == '__main__':
           sys.exit("FATAL: Program terminating")
 
     # STEP: Check that all private networks are provisioned (ready to use) - otherwise pause until ready
+    ## TO BE DONE!
 
     raw_input("READY TO DEPLOY VIRTUAL MACHINES. Press any key to continue...")
     # STEP: Deploy virtual machines in zones
