@@ -65,6 +65,7 @@ class VDCApiCall(object):
         request_data += "&signature=%s" % sig
         # print the URL string for debug
         ###print(request_data)
+        ###print(self.api_url + "?" + request_data)
 
         try:
             connection = urllib2.urlopen(self.api_url + "?" + request_data ) # GET request

@@ -42,7 +42,6 @@ if __name__ == '__main__':
        zonesDict = json.load(json_file)
 
     ansiblehostsfile = datafile.split('.')[0] + "_ansible_hosts"
-    sshport = zonesDict[zonesDict.keys()[0]]['publicport']
 
     # STEP: Open ansiblehostsfile
     with open(ansiblehostsfile, 'w') as outfile:
@@ -52,8 +51,8 @@ if __name__ == '__main__':
        for z in zonesDict:
           if zonesDict[z]['internetipaddress'] != 'MISSING':
              hostnum = hostnum + 1
-             print("HOST %d>> %s ansible_host=%s ansible_port=%d ansible_user=%s ansible_ssh_private_key_file=%s" % (hostnum, zonesDict[z]['virtualmachinename'], zonesDict[z]['publicipaddress'], sshport, sshUser, sshkeyFile))
-             outfile.write("%s ansible_host=%s ansible_port=%d ansible_user=%s ansible_ssh_private_key_file=%s\n" % (zonesDict[z]['virtualmachinename'], zonesDict[z]['publicipaddress'], sshport, sshUser, sshkeyFile))
+             print("HOST %d>> %s ansible_host=%s ansible_port=%d ansible_user=%s ansible_ssh_private_key_file=%s" % (hostnum, zonesDict[z]['virtualmachinename'], zonesDict[z]['publicipaddress'], zonesDict[z]['publicport'], sshUser, sshkeyFile))
+             outfile.write("%s ansible_host=%s ansible_port=%d ansible_user=%s ansible_ssh_private_key_file=%s\n" % (zonesDict[z]['virtualmachinename'], zonesDict[z]['publicipaddress'], zonesDict[z]['publicport'], sshUser, sshkeyFile))
         
     # Step: File write complete
     print("File %s written. Program terminating." % ansiblehostsfile)

@@ -56,7 +56,7 @@ if __name__ == '__main__':
                         help="specify the public Internet access mode: single VM with Internet or all VM with Internet (default: single)")
     parser.add_argument("-p", "--primaryzone", default="DEFAULT", help="name of zone which should be the access point for single-zone Internet access")
     parser.add_argument("-q", "--publicport", type=int, default=62200, help="Public SSH port to be assigned for the public Internet network(s)")
-    parser.add_argument("-k", "--keypair", help="Keypair name (if it does not exist in VDC, a new keypair will be created)")
+    parser.add_argument("-k", "--keypair", help="Keypair name (it must exist for all VDC regions)")
     parser.add_argument("-u", "--userdatafile", default='', help="filename for userdata to use in deployment")
     config_file = parser.parse_args().config
     dcgID = parser.parse_args().dcgid
@@ -117,6 +117,16 @@ if __name__ == '__main__':
        dcgConfig = dcgConfigTest[0]
     
     vdcRegions = ['Europe', 'USA', 'Asia']
+
+    # STEP: Pre-checks for usable inputs for:
+    #     keypair (defined in all required regions)
+    #     templateName (defined in all required zones)
+    #     serviceofferingName (defined in all required regions)
+    #     
+    # ... TO BE DONE ...
+    #
+
+    # STEP: Construct dict with zones information
     allZonesDict = {}
     for r in vdcRegions:
        zlist = api.listZones({'region':r})['zone']
@@ -142,8 +152,7 @@ if __name__ == '__main__':
        zonesDict[pz]['primary'] = True
        primaryZone = pz
 
-    ## TO DO: CHECK VALIDITY OF templateName, serviceofferingName, ....
-
+    
     # STEP: Check and if required create private networks in the zones
     # If there is more than one private DC network in the zone and the DCG, then the first one is selected
     for z in zonesDict:
@@ -265,14 +274,11 @@ if __name__ == '__main__':
           networkCreationNumber = networkCreationNumber + 1
        print("Finished the creation of Internet Gateway networks... continuing to next step")
     
-    # STEP: Check and if required create SSH keypair
-    # ... TO BE DONE ...
-    
     # STEP: Load and prepare userdata
     # ... TO BE DONE ...
     
     # STEP: Check and record templateid for each zone based on templateName
-    # Assumption is that a template with templateName exists in all required zones
+    # Pre-check above tests that a template with templateName exists in all required zones
     for z in zonesDict:
        try:
           zonesDict[z]['templateid'] = api.listTemplates({'region':zonesDict[z]['region'],'templatefilter':'executable', 'name':templateName, 'zoneid':zonesDict[z]['id']})['template'][0]['id']
@@ -281,6 +287,7 @@ if __name__ == '__main__':
           sys.exit("FATAL: Program terminating")
     
     # STEP: Check and record serviceofferingid for each zone based on serviceofferingName (this ID should be same for all zones within a region)
+    # Pre-check above tests that a serviceofferingName exists in all required regions
     for z in zonesDict:
        try:
           zonesDict[z]['serviceofferingid'] = api.listServiceOfferings({'region':zonesDict[z]['region'], 'name':serviceofferingName})['serviceoffering'][0]['id']
@@ -362,6 +369,7 @@ if __name__ == '__main__':
           time.sleep(checkDelay)        
     
     # STEP: Create portforwarding rules
+    ## TO DO: CHECK IF publicPort IS ALREADY USED AND CHANGE (OR ASK USER FOR) PORT NUMBER IF NECESSARY
     for z in zonesDict:
        ##if zonesDict[z]['internetnetworkid'] != 'MISSING':
        if accessMode != 'single' or (z == primaryZone and accessMode == 'single'):
