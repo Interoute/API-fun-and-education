@@ -55,7 +55,7 @@ if __name__ == '__main__':
     serviceofferingID = '4cb92069-e001-4637-8848-76d74f406bb8'
     networkIDs = '86af9d6d-0ed2-4b4b-a2ae-30b061e3524d'
     # naming convention for VMs, a date and random digits will be added
-    vmName = 'Webcluster-'   
+    vmName = 'Webcluster-Frankfurt-web'   
     # min and max numbers of VMs to run
     maxVM = 10			
     minVM = 1
@@ -86,6 +86,8 @@ if __name__ == '__main__':
     ## Probably need to also add VMs with state=Starting because the VM deploy time could be longer than the run frequency of this script
     currentVmCount = vmresult['count']
     currentVmList = [[vm['id'],vm['name']] for vm in vmresult['virtualmachine']]
+    # sort list alphabetically by VM names
+    currentVmList.sort(key=lambda x: x[1])
     print("Current virtual machines: %d" % currentVmCount)
     print("VM list:")
     for v in currentVmList:
@@ -118,12 +120,17 @@ if __name__ == '__main__':
 
     print("Change to VMs: %d" % changeVMNum)
 
+
+    # STEP: Create new VM, or delete VM, or no changes required
     if changeVMNum == 0:
-       print("No changes to VMs required. Stopping script")
-    ##elif changeVMNum > 0:
+       print("No changes to VMs required. Stopping script.")
+    elif changeVMNum > 0:
+       print("Creating %d VMs now..." % changeVMNum)
        
+    elif changeVMNum < 0:
+       print("Deleting %d VMs now..." % abs(changeVMNum)) 
+
        
-    # STEP: 
     
 '''
 if(($currentvms < $tobevms) and ($currentvms < $maxvms)) {
