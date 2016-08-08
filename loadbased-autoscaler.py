@@ -25,6 +25,7 @@ import datetime
 import argparse
 import re
 import math
+import random
 
 if __name__ == '__main__':
     # STEP 1: Parse command line arguments
@@ -51,11 +52,11 @@ if __name__ == '__main__':
     haproxyStatsUser = 'stats'
     haproxyStatsPassword = '132stats'
     zoneID = '7144b207-e97e-4e4a-b15d-64a30711e0e7'
-    templateID = '524f0b99-f811-446c-bde2-31df4ba0378c'
+    templateID = '545abbf5-5d37-4156-8c4f-85571f1bd5b3'
     serviceofferingID = '4cb92069-e001-4637-8848-76d74f406bb8'
-    networkIDs = '86af9d6d-0ed2-4b4b-a2ae-30b061e3524d'
+    networkIDs = 'e7d5c36d-ff6f-42c1-bbc3-8fd83a2b97f4,82d6f7cb-d654-4a5e-949b-8fecb8f66c04'
     # naming convention for VMs, a date and random digits will be added
-    vmName = 'Webcluster-Frankfurt-web'   
+    vmName = 'Webcluster-Frankfurt-web-'   
     # min and max numbers of VMs to run
     maxVM = 10			
     minVM = 1
@@ -81,17 +82,29 @@ if __name__ == '__main__':
     # STEP: Create the api access object for VDC
     api = vdc.VDCApiCall(api_url, apiKey, secret)
 
+    # STEP: Program starting message
+    timeNow = datetime.datetime.utcnow()
+    timestamp = timeNow.strftime("%Y-%m-%d %H:%M:%S UTC")
+    print("\n\n********************************************")
+    print("loadbased_autoscaler: Program starting at %s" % timestamp)
+    print("********************************************")
+
     # STEP: Check the number of running VMs
-    vmresult = api.listVirtualMachines({'region': vdcRegion, 'zone': zoneID, 'state': 'Running', 'name': vmName})
+    vmresult1 = api.listVirtualMachines({'region': vdcRegion, 'zone': zoneID, 'state': 'Running', 'name': vmName})
     ## Probably need to also add VMs with state=Starting because the VM deploy time could be longer than the run frequency of this script
-    currentVmCount = vmresult['count']
-    currentVmList = [[vm['id'],vm['name']] for vm in vmresult['virtualmachine']]
+    vmresult2 = api.listVirtualMachines({'region': vdcRegion, 'zone': zoneID, 'state': 'Starting', 'name': vmName})
+    if vmresult2 != {}:
+       currentVmCount = vmresult1['count'] + vmresult2['count']
+       currentVmList = [[vm['id'],vm['name'],vm['state']] for vm in vmresult1['virtualmachine']] + [[vm['id'],vm['name'],vm['state']] for vm in vmresult2['virtualmachine']]
+    else:
+       currentVmCount = vmresult1['count']
+       currentVmList = [[vm['id'],vm['name'],vm['state']] for vm in vmresult1['virtualmachine']]
     # sort list alphabetically by VM names
     currentVmList.sort(key=lambda x: x[1])
     print("Current virtual machines: %d" % currentVmCount)
     print("VM list:")
     for v in currentVmList:
-        print("%s: %s" % (v[0],v[1]))
+        print("%s: %s (state: %s)" % (v[0],v[1],v[2]))
     
     # STEP: Query to HAProxy VM statistics and extract the number of current sessions
     # Do this twice to get a more reliable number
@@ -109,12 +122,14 @@ if __name__ == '__main__':
     else:
        requiredVmCount = currentSessionsCount / sessionPerVM + 1
 
+    requiredVmCount = 5
+
     if requiredVmCount > maxVM:
        requiredVmCount = maxVM
     if requiredVmCount < minVM:
        requiredVmCount = minVM
 
-    print("Required VMs (for %d sessions per VM): %d" % (sessionPerVM, currentSessionsCount))
+    print("Required VMs (for maximum loading of %d sessions per VM): %d" % (sessionPerVM, requiredVmCount))
         
     changeVMNum = requiredVmCount - currentVmCount
 
@@ -123,14 +138,31 @@ if __name__ == '__main__':
 
     # STEP: Create new VM, or delete VM, or no changes required
     if changeVMNum == 0:
-       print("No changes to VMs required. Stopping script.")
+       print("No changes to VMs required.")
     elif changeVMNum > 0:
        print("Creating %d VMs now..." % changeVMNum)
-       
+       timeNow = datetime.datetime.utcnow()
+       timestamp = timeNow.strftime("%Y%m%dT%H%M%S")
+       for i in range(changeVMNum):
+          ## vmNewName = vmName + timestamp + '-' + "%04d" % int(random.random()*10000)
+          vmNewName = vmName + timestamp + '-' + "%03d" % (i+1)
+          print("  creating: %s" % vmNewName)
+          api.deployVirtualMachine({'region':vdcRegion, 'name':vmNewName, 'displayname':vmNewName, 'zoneid': zoneID, 'templateid': templateID, 'serviceofferingid': serviceofferingID, 'networkids': networkIDs})       
     elif changeVMNum < 0:
        print("Deleting %d VMs now..." % abs(changeVMNum)) 
+       for i in range(abs(changeVMNum)):
+          print("  deleting: %s" % currentVmList[i][1])
+          api.destroyVirtualMachine({'region':vdcRegion, 'id': currentVmList[i][0], 'expunge':True})
+          
+     
+    # STEP: Program finished
+    timeNow = datetime.datetime.utcnow()
+    timestamp = timeNow.strftime("%Y-%m-%d %H:%M:%S UTC")
+    print("********************************************")
+    print("loadbased_autoscaler: Program finished at %s" % timestamp)
+    print("********************************************")
 
-       
+
     
 '''
 if(($currentvms < $tobevms) and ($currentvms < $maxvms)) {
