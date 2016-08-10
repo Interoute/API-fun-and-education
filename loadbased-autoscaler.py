@@ -1,19 +1,21 @@
 #! /usr/bin/env python
 # Python script for the Interoute Virtual Data Centre API:
 #   Name: loadbased-autoscaler.py
-#   Purpose: Perform autoscaling of webserver virtual machines in VDC based on loading of an HAProxy frontend server
+#   Purpose: Perform autoscaling of webserver virtual machines in VDC based on loading of an HAProxy frontend loadbalancer
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 # See the repo: https://github.com/Interoute/API-fun-and-education
 #
-# You can pass options via the command line: type 'python loadbased-autoscaler.py -h'
-# for usage information
+# You can pass options via the command line: type 'python loadbased-autoscaler.py -h' for usage information
+#
+# This program must be run with 'sudo' because it rewrites the file '/etc/haproxy/haproxy.cfg' 
 #
 # Based on an original VDC implementation and Perl script by Stefan Bienek
 #
 # Copyright (C) Interoute Communications Limited, 2016
 #
-# Reference: 
+# Reference for rewriting 'haproxy.cfg': 
 #   http://www.kloppmagic.ca/auto-scaling-with-haproxy/
+#
 
 from __future__ import print_function
 import vdc_api_call as vdc
@@ -37,23 +39,14 @@ if __name__ == '__main__':
                     help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
     parser.add_argument("-r", "--region", choices=['Europe','europe','USA','usa','Asia','asia'],
                     default='Europe', help="specify the VDC region: Europe, USA or Asia (default Europe)")
-    ##parser.add_argument("-w", "--writediag", action='store_true', help="write a diag file for use with nwdiag")
-    ##parser.add_argument("-f", "--diagfile", default='VDC-network-data.diag',
-    ##                help="name of the output diag file for use with nwdiag")
-    ##parser.add_argument("-z", "--zone", help="filter results by zone name (match by initial characters) ")
-    ##parser.add_argument("-v", "--vmstate", action='store_true', help="display VM state by text colour")
     vdcRegion = parser.parse_args().region
-    ##writeDiag = parser.parse_args().writediag
     config_file = parser.parse_args().config
-    ##zonenameFilter = parser.parse_args().zone
-    ##showVmState =  parser.parse_args().vmstate
-    ##if writeDiag:
-    ##   diagfileName = parser.parse_args().diagfile
 
     # TEMPORARY: Hard configuration settings
-    haproxyStatsURL = 'http://213.39.4.189:8080/haproxy?stats;csv'
-    haproxyStatsUser = 'stats'
-    haproxyStatsPassword = '132stats'
+    # REPLACE [INSERT] AND UUIDs WITH YOUR OWN VALUES
+    haproxyStatsURL = 'http://[INSERT]/haproxy?stats;csv'
+    haproxyStatsUser = '[INSERT]'
+    haproxyStatsPassword = '[INSERT]'
     haproxyConfigFileStatic = 'haproxy_cfg_static'
     haproxyConfigFile = '/etc/haproxy/haproxy.cfg'
     zoneID = '7144b207-e97e-4e4a-b15d-64a30711e0e7'
