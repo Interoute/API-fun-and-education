@@ -123,8 +123,8 @@ if __name__ == '__main__':
     else:
        requiredVmCount = currentSessionsCount / sessionPerVM + 1
 
-    # TEMPORARY CONTROL!
-    requiredVmCount = 3
+    # FOR TESTING: SET THIS VARIABLE TO OVERRIDE THE SESSION-BASED CALCULATION 
+    ##requiredVmCount = 3
 
     if requiredVmCount > maxVM:
        requiredVmCount = maxVM
