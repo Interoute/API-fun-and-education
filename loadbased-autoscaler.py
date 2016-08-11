@@ -180,6 +180,9 @@ if __name__ == '__main__':
        for i in range(abs(changeVMNum)):
           print("  deleting: %s" % currentVmList[i][1])
           api.destroyVirtualMachine({'region':vdcRegion, 'id': currentVmList[i][0], 'expunge':True})
+       # Pause so that the deleted VMs have time to switch off, and won't be detected at the next step
+       time.sleep(20)
+
 
     # STEP: Rewrite the HAProxy config file if there is a change
     if changeVMNum != 0:
@@ -187,7 +190,6 @@ if __name__ == '__main__':
        vmresult = api.listVirtualMachines({'region': vdcRegion, 'zone': zoneID, 'state': 'Running', 'name': vmName})
        vmAddressList = [[vm['name'].replace('-','').lower(), [net for net in vm['nic'] if net['networkid']==networkIDs.split(',')[0]][0]['ipaddress']] for vm in vmresult['virtualmachine']]
        vmAddressList.sort(key=lambda x: x[0])
-       ##print(vmAddressList)
        with open(haproxyConfigFileStatic) as fh:
           haproxyConfigStatic = fh.read()
        with open(haproxyConfigFile, 'w') as outfh:
