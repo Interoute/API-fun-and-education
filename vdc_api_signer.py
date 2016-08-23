@@ -12,6 +12,13 @@
 #  "api_key": "GHIJKL7H0XeKt25Ygi6ANp89JrWj46Fbo5L0Zfc7PTn1z9D3MwQy28EaBq42Sdk4RJd85SoHc0s6FBw39LyDp",
 #  "api_url": "https://apiserver.example.com/api/"}
 #
+# EXAMPLE USES:
+# $ python vdc_api_signer.py -c vdcapi -x listZones
+# $ python vdc_api_signer.py -c vdcapi -x listZones -a '{"region":"asia"}'
+# $ python vdc_api_signer.py -c vdcapi -x listZones -a '{"region":"asia"}' -e
+# $ python vdc_api_signer.py -c vdcapi -x listZones -a '{"region":"asia"}' -t
+# $ python vdc_api_signer.py -c vdcapi -x listVirtualMachines -a '{"region":"asia", "zoneid":"f2e16beb-b8b1-4f1d-b211-6b6feb6bb394"}'
+#
 # Reference: Accepting a dictionary as an argument with argparse and python
 # http://stackoverflow.com/questions/18608812/accepting-a-dictionary-as-an-argument-with-argparse-and-python
 
