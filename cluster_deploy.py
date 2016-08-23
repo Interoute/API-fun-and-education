@@ -54,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--outfile", default="DEFAULT", help="name of output file to receive the cluster setup information (default is CLUSTERNAME.json)")
     parser.add_argument("-m", "--accessmode", choices=['single','all'], default='single',
                         help="specify the public Internet access mode: single VM with Internet or all VM with Internet (default: single)")
-    parser.add_argument("-p", "--primaryzone", default="DEFAULT", help="name of zone which should be the access point for single-zone Internet access")
+    parser.add_argument("-p", "--primaryzone", default="DEFAULT", help="name of zone which should be the access point for single-zone Internet access (if not set, primary zone will be the first in the list of zones)")
     parser.add_argument("-q", "--publicport", type=int, default=62200, help="Public SSH port to be assigned for the public Internet network(s)")
     parser.add_argument("-k", "--keypair", help="Keypair name (it must exist for all VDC regions)")
     parser.add_argument("-u", "--userdatafile", default='', help="filename for userdata to use in deployment")
