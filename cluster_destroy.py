@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
                     help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
     parser.add_argument("-f", "--filename", help="name of input file with the cluster setup information in JSON format")
-    parser.add_argument("-x", "--expunge", action='store_true', help="expunge the virtual machines")
+    parser.add_argument("-x", "--expunge", action='store_true', help="expunge the virtual machines (otherwise they will put into Destroyed state)")
     config_file = parser.parse_args().config
     datafile = parser.parse_args().filename
     expunge = parser.parse_args().expunge

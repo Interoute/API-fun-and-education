@@ -337,7 +337,8 @@ if __name__ == '__main__':
                 result = api.queryAsyncJobResult({'region':zonesDict[z]['region'], 'jobid': zonesDict[z]['deployjobid']})
              except KeyError:
                 pass
-             if 'jobresult' in result:
+             if 'jobresult' in result and 'virtualmachine' in result['jobresult']:
+                # Deployment finished and it was successful ('virtualmachine' key exists) 
                 countdown = countdown - 1
                 zonesDict[z]['deploycomplete'] = True
                 vmNics = result['jobresult']['virtualmachine']['nic']
@@ -356,6 +357,12 @@ if __name__ == '__main__':
                 zonesDict[z]['keypair'] = result['jobresult']['virtualmachine']['keypair']
                 print('')
                 print("VM deploy completed in zone %s. %d zones left to complete." % (zonesDict[z]['name'],countdown))
+             if 'jobresult' in result and 'virtualmachine' not in result['jobresult']:
+                # Deployment finished but with failure ('virtualmachine' key doesn't exist) 
+                countdown = countdown - 1
+                zonesDict[z]['deploycomplete'] = True
+                print('')
+                print("ERROR: VM deployment FAILED in zone %s. %d zones left to complete." % (zonesDict[z]['name'],countdown))
           elif zonesDict[z]['deployjobid'] == 'MISSING':
              countdown = countdown - 1
              zonesDict[z]['deploycomplete'] = True
