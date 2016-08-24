@@ -33,11 +33,13 @@ if __name__ == '__main__':
                     help="name of the output diag file for use with nwdiag")
     parser.add_argument("-z", "--zone", help="filter results by zone name (match by initial characters) ")
     parser.add_argument("-v", "--vmstate", action='store_true', help="display VM state by text colour")
+    parser.add_argument("-u", "--uuid", action='store_true', help="display the UUIDs for networks, IP addresses and VMs")  
     vdcRegion = parser.parse_args().region
     writeDiag = parser.parse_args().writediag
     config_file = parser.parse_args().config
     zonenameFilter = parser.parse_args().zone
     showVmState =  parser.parse_args().vmstate
+    showUUID = parser.parse_args().uuid
     if writeDiag:
        diagfileName = parser.parse_args().diagfile
 
@@ -134,6 +136,18 @@ if __name__ == '__main__':
                   print(", IP: UNALLOCATED)")
             else:
                print(")")
+            #PRINT UUIDs FOR NETWORK AND IP ADDRESS(ES)
+            if showUUID:
+               print("    [networkid=%s" % network['id'], end='')
+               if network['subtype']=='internetgateway' and external_IP != {}:
+                  if external_IP['count']==1:
+                     print(", ipaddressid=%s]" % external_IP['publicipaddress'][0]['id'])
+                  else: # more than one public IP address for this network
+                     for n in range(0,external_IP['count']):
+                        print(", ipaddressid%s=%s" % (n+1, external_IP['publicipaddress'][n]['id']), end='')
+                     print("]")
+               else: # no ipaddressid values to print
+                  print("]")
             #GET AND PRINT LOADBALANCER RULES
             lbRulesWithVM = []
             if loadBalancerRulesList != {}:
@@ -175,25 +189,26 @@ if __name__ == '__main__':
                 for i in range(len(members)):
                     ###print("DEBUG: %s" % members[i])
                     if i==len(members)-1:  #this is last VM in the network
-                        if showVmState:
-                           if members[i][4] == 'Running':
-                              print("   "+unichr(0x2514)+"\x1b[32m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='')
-                           elif members[i][4] == 'Stopped':
-                              print("   "+unichr(0x2514)+"\x1b[31m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='')
-                           else:
-                              print("   "+unichr(0x2514)+"\x1b[36m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='') 
-                        else:
-                           print("   "+unichr(0x2514)+" %s: '%s' " % (members[i][1],members[i][2]), end='') 
+                       print("   " + unichr(0x2514), end='')
                     else:
-                       if showVmState:
-                           if members[i][4] == 'Running':
-                              print("   "+unichr(0x251C)+"\x1b[32m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='')
-                           elif members[i][4] == 'Stopped':
-                              print("   "+unichr(0x251C)+"\x1b[31m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='')
-                           else:
-                              print("   "+unichr(0x251C)+"\x1b[36m %s: '%s' \x1b[0m" % (members[i][1],members[i][2]), end='') 
+                       print("   " + unichr(0x251C), end='')
+                    if showVmState:
+                       if members[i][4] == 'Running':
+                          stateColorOn = "\x1b[32m"
+                          stateColorOff = "\x1b[0m"
+                       elif members[i][4] == 'Stopped':
+                          stateColorOn = "\x1b[31m"
+                          stateColorOff = "\x1b[0m"
                        else:
-                           print("   "+unichr(0x251C)+" %s: '%s' " % (members[i][1],members[i][2]), end='')
+                          stateColorOn = "\x1b[36m"
+                          stateColorOff = "\x1b[0m"
+                    else:
+                       stateColorOn = ""
+                       stateColorOff = ""
+                    if showUUID:
+                       print((" " + stateColorOn + " %s: '%s' [id=%s] " + stateColorOff) % (members[i][1],members[i][2],members[i][3]), end='')
+                    else:
+                       print((" " + stateColorOn + " %s: '%s'" + stateColorOff) % (members[i][1],members[i][2]), end='')
                     if external_IP != {}:
                        #check for port forwarding rules
                        pfRules = []
@@ -231,7 +246,6 @@ if __name__ == '__main__':
                           externalIpMultiple = False
                        for n in range(0,external_IP['count']):
                           lbRules = lbRules + [l for l in lbRulesWithVM if l['publicip']==external_IP['publicipaddress'][n]['ipaddress'] and members[i][3] in l['vmlist']]
-
                     if lbRules != []:
                           print(" (LBports:",end='')
                           for l in lbRules:
