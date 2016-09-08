@@ -121,6 +121,7 @@ if __name__ == '__main__':
                 ), end='')
                
             #FIND EXTERNAL IP ADDRESSES IF THEY EXIST FOR THE NETWORK
+            external_IP = {}
             if network['subtype']=='internetgateway':
                testdict=request
                testdict['associatednetworkid']=network['id']
