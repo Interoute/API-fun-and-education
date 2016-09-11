@@ -29,33 +29,32 @@ import argparse
 import re
 from subprocess import call
 
-if __name__ == '__main__':
-    # STEP: Parse the command line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--filename", help="name of input file with the cluster setup information in JSON format")
-    parser.add_argument("-i", "--inventory", default="DEFAULT", help="name of hosts inventory file for Ansible")
-    datafile = parser.parse_args().filename
-    ifile = parser.parse_args().inventory
-    if ifile == 'DEFAULT':
-       inventoryFile = datafile.split('.')[0] + "_ansible_hosts"
-    else:
-       inventoryFile = ifile
+# STEP: Parse the command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--filename", help="name of input file with the cluster setup information in JSON format")
+parser.add_argument("-i", "--inventory", default="DEFAULT", help="name of hosts inventory file for Ansible")
+datafile = parser.parse_args().filename
+ifile = parser.parse_args().inventory
+if ifile == 'DEFAULT':
+   inventoryFile = datafile.split('.')[0] + "_ansible_hosts"
+else:
+   inventoryFile = ifile
  
-    # STEP: Load the cluster data from the JSON file
-    with open(datafile) as json_file:
-       zonesDict = json.load(json_file)
+# STEP: Load the cluster data from the JSON file
+with open(datafile) as json_file:
+   zonesDict = json.load(json_file)
 
-    # THIS CODE FOR REUSE IN PING SETUP..............................................
+# THIS CODE FOR REUSE IN PING SETUP..............................................
 
-    # STEP: If VM has a Local Gateway network then execute Ansible call to modify 'ip route'
-    #print("Adding routes for VMs in the cluster with 2 networks...")
-    #for z in zonesDict:
-    #   if zonesDict[z]['internetipaddress'] != 'MISSING':
-    #      call(["ansible","-i", inventoryFile, zonesDict[z]['virtualmachinename'], "-s", "-a", "ip route add 10.0.0.0/8 via %s" % (zonesDict[z]['privategateway'])])
-           
-    # STEP: Use Ansible to check 'ip route' for all VMs in the cluster
-    #print("Checking 'ip route' for all VMs in the inventory file...")
-    #call(["ansible","-i", inventoryFile, "all", "-m", "shell", "-a", "ip route"])
+# STEP: If VM has a Local Gateway network then execute Ansible call to modify 'ip route'
+#print("Adding routes for VMs in the cluster with 2 networks...")
+#for z in zonesDict:
+#   if zonesDict[z]['internetipaddress'] != 'MISSING':
+#      call(["ansible","-i", inventoryFile, zonesDict[z]['virtualmachinename'], "-s", "-a", "ip route add 10.0.0.0/8 via %s" % (zonesDict[z]['privategateway'])])
+       
+# STEP: Use Ansible to check 'ip route' for all VMs in the cluster
+#print("Checking 'ip route' for all VMs in the inventory file...")
+#call(["ansible","-i", inventoryFile, "all", "-m", "shell", "-a", "ip route"])
         
         
 
