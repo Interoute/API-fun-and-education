@@ -374,13 +374,22 @@ while not deployAllComplete:
       time.sleep(checkDelay)        
     
 # STEP: Create portforwarding rules
-## TO DO: CHECK IF publicPort IS ALREADY USED AND CHANGE (OR ASK USER FOR) PORT NUMBER IF NECESSARY
 for z in zonesDict:
    ##if zonesDict[z]['internetnetworkid'] != 'MISSING':
    if accessMode != 'single' or (z == primaryZone and accessMode == 'single'):
       try:
-         print("Executing createPortForwardingRule for zone %s" % zonesDict[z]['name'])
-         pfResult = api.createPortForwardingRule({'region': zonesDict[z]['region'], 'zoneid':zonesDict[z]['id'], 'openfirewall':True, 'publicport':publicPort, 'privateport':22, 'protocol':'TCP', 'virtualmachineid':zonesDict[z]['virtualmachineid'], 'ipaddressid':zonesDict[z]['publicipaddressid']})
+         print("Executing createPortForwardingRule for zone %s with port %d" % (zonesDict[z]['name'], zonesDict[z]['publicport']))
+         pfTestResult =  api.listPortForwardingRules({'ipaddressid':zonesDict[z]['publicipaddressid']})
+         if pfTestResult != {}:
+            testPortResult = pfTestResult['portforwardingrule']
+            usedPorts = [int(t['publicport']) for t in testPortResult]
+            publicPortNum = int(publicPort)
+            if publicPortNum in usedPorts:
+               while publicPortNum in usedPorts:
+                  publicPortNum += 1
+               zonesDict[z]['publicport'] = publicPortNum
+               print("  Public port for zone %s changed to %d due to specified port %d in use" % (zonesDict[z]['name'], zonesDict[z]['publicport'], publicPort)) 
+         pfResult = api.createPortForwardingRule({'region': zonesDict[z]['region'], 'zoneid':zonesDict[z]['id'], 'openfirewall':True, 'publicport':zonesDict[z]['publicport'], 'privateport':22, 'protocol':'TCP', 'virtualmachineid':zonesDict[z]['virtualmachineid'], 'ipaddressid':zonesDict[z]['publicipaddressid']})
          zonesDict[z]['pfjobid'] = pfResult['jobid']
       except:
          print("ERROR: Failure occurred in API call createPortForwardingRule for zone %s" % zonesDict[z]['name'])
