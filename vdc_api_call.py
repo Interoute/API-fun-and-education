@@ -15,6 +15,7 @@ import hmac
 import json
 import sys
 import time
+import datetime
 import urllib
 import urllib2
 from socket import error as SocketError
@@ -78,7 +79,10 @@ class VDCApiCall(object):
                 # not a RESET error so report it and exit
                 print('Socket error: %s' % e.errno)
                 sys.exit()
-            pass # ignore a RESET error and carry on
+            # ignore a RESET error and carry on by returning an empty response
+            error_timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S+0000")
+            print("\n%s Exception for socket error 104 for request:\n%s" % (error_timestamp,self.api_url + "?" + request_data))
+            return '{"CONNECTIONERRORresponse":{}}'
         except urllib2.HTTPError as error:
             print('HTTP Error: %s' % error.code)
             description = str(error.info())
@@ -133,4 +137,5 @@ class VDCApiCall(object):
         ##key = command.lower() + "response"
         ##  Temporary change due to incompatible behaviour of the new network commands
         ##return json.loads(data)[key]
+        ##print("DEBUG data: %s" % data)
         return json.loads(data).values()[0]

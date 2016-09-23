@@ -60,8 +60,12 @@ with open(datafile) as json_file:
 print("%s, %s, %s, %s, %s" % ("VDC_zone", "VM_created_datetime", "VM_deploytime", "VM_created_date", "VM_created_time"))    
 for z in zonesDict:
    if 'created' in zonesDict[z].keys():
-      zonesDict[z]['createddate'] = zonesDict[z]['created'].split('T')[0]
-      zonesDict[z]['createdtime'] = zonesDict[z]['created'].split('T')[1].split('+')[0]
+      if zonesDict[z]['created'] != "NA":
+         zonesDict[z]['createddate'] = zonesDict[z]['created'].split('T')[0]
+         zonesDict[z]['createdtime'] = zonesDict[z]['created'].split('T')[1].split('+')[0]
+      else:
+         zonesDict[z]['createddate'] = "NA"
+         zonesDict[z]['createdtime'] = "NA"
       print("%s, %s, %d, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), zonesDict[z]['created'], zonesDict[z]['deploytime'],  zonesDict[z]['createddate'], zonesDict[z]['createdtime']))
    else:
-      print("%s, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), "NA", "NA"))
+      print("%s, %s, %s, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), "NA", "NA", "NA", "NA"))
