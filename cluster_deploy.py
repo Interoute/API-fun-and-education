@@ -14,6 +14,7 @@
 # References:
 #   stackoverflow.com/questions/5105517/deep-copy-of-a-dict-in-python
 #   stackoverflow.com/questions/3939361/remove-specific-characters-from-a-string-in-python
+#   http://stackoverflow.com/questions/969285/how-do-i-translate-a-iso-8601-datetime-string-into-a-python-datetime-object
 #   
 
 from __future__ import print_function
@@ -28,6 +29,8 @@ import sys
 import pprint
 import time
 import datetime
+import dateutil.parser
+import pytz
 import textwrap
 import argparse
 import urllib
@@ -293,7 +296,7 @@ for z in zonesDict:
       print("ERROR: Failure occurred in API call listServiceOfferings for zone %s" % zonesDict[z]['name'])
       sys.exit("FATAL: Program terminating")
 
-# STEP: Check that all private networks are provisioned (ready to use) - otherwise pause until ready
+# STEP: Check that all private networks are provisioned (i.e. ready to use) - otherwise pause until ready
 ## TO BE DONE!
 
 raw_input("READY TO DEPLOY VIRTUAL MACHINES. Press any key to continue...")
@@ -338,6 +341,9 @@ while not deployAllComplete:
             # Deployment finished and it was successful ('virtualmachine' key exists) 
             countdown = countdown - 1
             zonesDict[z]['deploycomplete'] = True
+            zonesDict[z]['created'] = result['jobresult']['virtualmachine']['created']    
+            zonesDict[z]['deploytime'] = (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) 
+                                            - dateutil.parser.parse(zonesDict[z]['created'])).seconds
             vmNics = result['jobresult']['virtualmachine']['nic']
             zonesDict[z]['privateipaddress'] = [net for net in vmNics if net['networkid']==zonesDict[z]['privatenetworkid']][0]['ipaddress']
             ##if zonesDict[z]['internetnetworkid'] != 'MISSING':

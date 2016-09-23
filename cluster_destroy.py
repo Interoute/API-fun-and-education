@@ -59,11 +59,7 @@ with open(datafile) as json_file:
 # STEP: Check if VM exists (ie. not already deleted) and check VM state
 zNotExist = []
 for z in zonesDict:
-   if 'virtualmachineid' in zonesDict[z].keys():
-      # VM deploy appears healthy so call API to check the VM state
-      resultVmCheck = api.listVirtualMachines({'region':zonesDict[z]['region'], 'id':zonesDict[z]['virtualmachineid']})
-      zonesDict[z]['state'] = resultVmCheck['virtualmachine'][0]['state'] 
-   elif 'virtualmachineid' not in zonesDict[z].keys():
+   if 'virtualmachineid' not in zonesDict[z].keys():
       # VM deploy is uncertain so check by looking for a matching VM name.
       # if VM exists get the deploy data, otherwise report as 'not found'
       vmName = "VM-" + re.sub('[ ()]','', zonesDict[z]['name']) + "-" + re.sub('[ ()]','', zonesDict[z]['clustername'])
@@ -76,10 +72,16 @@ for z in zonesDict:
          zonesDict[z]['virtualmachineid'] = resultVmNameCheck['virtualmachine'][0]['id']
          zonesDict[z]['state'] = resultVmNameCheck['virtualmachine'][0]['state']
          zonesDict[z]['deploycomplete'] = True
-   elif api.listVirtualMachines({'region':zonesDict[z]['region'], 'id':zonesDict[z]['virtualmachineid']}) == {}:
-      # VM appears to not exist 
-      print("VM NOT FOUND OR ALREADY DELETED: %s in zone %s" % (zonesDict[z]['virtualmachineid'],zonesDict[z]['name']))
-      zNotExist = zNotExist + [z]
+   elif 'virtualmachineid' in zonesDict[z].keys():
+      resultVmCheck = api.listVirtualMachines({'region':zonesDict[z]['region'], 'id':zonesDict[z]['virtualmachineid']})
+      if resultVmCheck != {}:
+         # VM deploy appears healthy
+         zonesDict[z]['state'] = resultVmCheck['virtualmachine'][0]['state'] 
+      else:
+         # VM appears to not exist 
+         print("VM NOT FOUND OR ALREADY DELETED: %s in zone %s" % (zonesDict[z]['virtualmachineid'],zonesDict[z]['name']))
+         zNotExist = zNotExist + [z]
+         
 if set(zonesDict.keys())-set(zNotExist) == set([]):
    print("All VMs are already deleted. Nothing to do.")
    sys.exit("FATAL: Program terminating")

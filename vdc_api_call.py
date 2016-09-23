@@ -6,7 +6,7 @@
 
 # This program is configured for Python version 2.6/2.7 
 #
-# Copyright (C) Interoute Communications Limited, 2015
+# Copyright (C) Interoute Communications Limited, 2015-2016
 
 from __future__ import print_function
 import base64
@@ -17,6 +17,8 @@ import sys
 import time
 import urllib
 import urllib2
+from socket import error as SocketError
+import errno
 
 class VDCApiCall(object):
     """
@@ -71,6 +73,12 @@ class VDCApiCall(object):
             connection = urllib2.urlopen(self.api_url + "?" + request_data ) # GET request
             ##connection = urllib2.urlopen(self.api_url, request_data) # POST request
             response = connection.read()
+        except SocketError as e:
+            if e.errno != errno.ECONNRESET:
+                # not a RESET error so report it and exit
+                print('Socket error: %s' % e.errno)
+                sys.exit()
+            pass # ignore a RESET error and carry on
         except urllib2.HTTPError as error:
             print('HTTP Error: %s' % error.code)
             description = str(error.info())

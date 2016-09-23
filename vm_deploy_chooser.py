@@ -404,7 +404,7 @@ if __name__ == '__main__':
            job_result_vm = api.wait_for_job(job_id)
            pprint.pprint(job_result_vm)
 
-    if askForPortforwarding:
+    if askForPortforwarding and pfrule_num > 0: # the second test catches when user skips setting pf rules
         pfrule_params_list = []
         for netid in [nid for nid in network_id.split(',') if networks_selected[nid] != {}]:
             for pfruledict in networks_selected[netid]['newpfrules']:
