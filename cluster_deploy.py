@@ -268,6 +268,7 @@ else:
          zonesDict[z]['internetnetworkid'] = createResult['localnetwork'][0]['id']
          zonesDict[z]['internetgateway'] = createResult['localnetwork'][0]['gateway']
          zonesDict[z]['internetcidr'] = createResult['localnetwork'][0]['cidr']
+         ## ***** TO ADD: CREATE PERMISSIVE EGRESS RULE FOR THE NEW NETWORK
       except:
          print("ERROR: Exception occurred in creating internet gateway network for zone %s. Please check if network created correctly." % zonesDict[z]['name'])
          sys.exit("FATAL: Program terminating")
@@ -312,6 +313,7 @@ for z in zonesDict:
       netIDs = zonesDict[z]['internetnetworkid'] + "," + zonesDict[z]['privatenetworkid']
    try:
       print("Executing deployVirtualMachine for zone %s" % zonesDict[z]['name'])
+      ###print("  DEBUG netIDs=%s" % netIDs)
       deployResult = api.deployVirtualMachine({'region': zonesDict[z]['region'], 'zoneid':zonesDict[z]['id'],'templateid':zonesDict[z]['templateid'],'serviceofferingid':zonesDict[z]['serviceofferingid'],'name':vmName, 'displayname':vmName, 'networkids':netIDs, 'keypair':keypairName})
       zonesDict[z]['deployjobid'] = deployResult['jobid']
    except:
@@ -358,6 +360,7 @@ while not deployAllComplete:
             zonesDict[z]['virtualmachineid'] = result['jobresult']['virtualmachine']['id']
             zonesDict[z]['virtualmachinename'] = result['jobresult']['virtualmachine']['name']
             zonesDict[z]['keypair'] = result['jobresult']['virtualmachine']['keypair']
+            zonesDict[z]['password'] = result['jobresult']['virtualmachine']['password']
             print('')
             print("VM deploy completed in zone %s. %d zones left to complete." % (zonesDict[z]['name'],countdown))
          if 'jobresult' in result and 'virtualmachine' not in result['jobresult']:

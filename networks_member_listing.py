@@ -139,7 +139,7 @@ if __name__ == '__main__':
                print(")")
             #PRINT UUIDs FOR NETWORK AND IP ADDRESS(ES)
             if showUUID:
-               print("    [networkid=%s" % network['id'], end='')
+               print("   " + unichr(0x2502) + "[networkid=%s" % network['id'], end='')
                if network['subtype']=='internetgateway' and external_IP != {}:
                   if external_IP['count']==1:
                      print(", ipaddressid=%s]" % external_IP['publicipaddress'][0]['id'])
