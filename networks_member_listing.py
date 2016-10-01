@@ -32,12 +32,14 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--diagfile", default='VDC-network-data.diag',
                     help="name of the output diag file for use with nwdiag")
     parser.add_argument("-z", "--zone", help="filter results by zone name (match by initial characters) ")
+    parser.add_argument("-e", "--egress", action='store_true', help="display egress rules for local gateway networks")
     parser.add_argument("-v", "--vmstate", action='store_true', help="display VM state by text colour")
     parser.add_argument("-u", "--uuid", action='store_true', help="display the UUIDs for networks, IP addresses and VMs")  
     vdcRegion = parser.parse_args().region
     writeDiag = parser.parse_args().writediag
     config_file = parser.parse_args().config
     zonenameFilter = parser.parse_args().zone
+    showEgress = parser.parse_args().egress
     showVmState =  parser.parse_args().vmstate
     showUUID = parser.parse_args().uuid
     if writeDiag:
@@ -149,12 +151,33 @@ if __name__ == '__main__':
                      print("]")
                else: # no ipaddressid values to print
                   print("]")
+            #GET AND PRINT EGRESS RULES FOR 'LOCAL WITH GATEWAY' NETWORKS
+            if showEgress and network['subtype']=='internetgateway':
+               print("   " + unichr(0x2502) + "(egress: ", end='')
+               try: 
+                  egressrules=api.listEgressFirewallRules({'networkid':network['id']})
+               except KeyError:
+                  pass
+               if egressrules == {}:
+                  print("NONE", end='')
+               else:
+                  for e in egressrules['firewallrule']:
+                     if e['protocol']=='all':
+                        print("[%s|ALL protocols/ports]" % (e['cidrlist']), end='')
+                     elif e['protocol']=='icmp':
+                        print("[%s|ICMP|icmptype: %d|icmpcode: %d] " % (e['cidrlist'], e['icmptype'], e['icmpcode']), end='')
+                     else:
+                        if e['startport'] == e['endport']:
+                           print("[%s|%s|port %d]" % (e['cidrlist'], e['protocol'].upper(), e['startport']), end='')
+                        else:
+                           print("[%s|%s|ports %d:%d]" % (e['cidrlist'], e['protocol'].upper(), e['startport'], e['endport']), end='')
+               print(")")
             #GET AND PRINT LOADBALANCER RULES
             lbRulesWithVM = []
             if loadBalancerRulesList != {}:
                lbRulesForNetwork = [lbr for lbr in loadBalancerRulesList['loadbalancerrule'] if lbr['networkid']==network['id']]
                for l in lbRulesForNetwork:
-                  print("   LB: '%s', IP: %s, ports: [%s]->[%s], state: " % (l['name'], l['publicip'], l['publicport'], l['privateport']), end='')
+                  print("   " + unichr(0x2502) + "LB: '%s', IP: %s, ports: [%s]->[%s], state: " % (l['name'], l['publicip'], l['publicport'], l['privateport']), end='')
                   try:
                       lVM = api.listLoadBalancerRuleInstances({'id':l['id'], 'region':vdcRegion})
                       print("%d VM" % lVM['count'])
