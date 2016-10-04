@@ -408,7 +408,7 @@ if __name__ == '__main__':
         pfrule_params_list = []
         for netid in [nid for nid in network_id.split(',') if networks_selected[nid] != {}]:
             for pfruledict in networks_selected[netid]['newpfrules']:
-                pfruledict['enablefirewall'] = 'true'
+                pfruledict['openfirewall'] = 'true'
                 pfruledict['region'] = vdcRegion
                 pfrule_params_list = pfrule_params_list + [pfruledict]
         print('')
