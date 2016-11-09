@@ -162,7 +162,9 @@ if __name__ == '__main__':
        print("Selected template: %s, '%s'\n" % (template_id, choice['itemcontent']))
 
     # STEP: Select the compute/service offering
-    ramlist = [512,1024,2048,4096,6144,8192,16384,24576,32768,65536,131072]
+    # **** TO DO: CPU choice should be based on actual offerings at each RAM level (there are 16 CPU at higher RAM)
+    # ****  Note there is an incomplete set of offerings at 49152 MB
+    ramlist = [512,1024,2048,4096,6144,8192,12288,16384,24576,32768,65536,131072]
     choice_cpu = -1
     while choice_cpu not in range(1,13):
        choice_cpu = input("Input the number of CPUs? (between 1 and 12): ")
