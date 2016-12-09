@@ -18,6 +18,7 @@ import getpass
 import json
 import os
 import sys
+import shutil
 import pprint
 import argparse
 import re
@@ -29,9 +30,11 @@ parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~
                 help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
 parser.add_argument("-f", "--filename", help="name of input file with the cluster setup information in JSON format")
 parser.add_argument("-x", "--expunge", action='store_true', help="expunge the virtual machines (otherwise they will put into Destroyed state)")
+parser.add_argument("-r", "--rename", action='store_true', help="rename the JSON info file with ending '-deploydata.json")
 config_file = parser.parse_args().config
 datafile = parser.parse_args().filename
 expunge = parser.parse_args().expunge
+rename = parser.parse_args().rename
     
 # STEP: If config file is found, read its content,
 # else query user for the URL, API key, Secret key
@@ -55,6 +58,8 @@ api = vdc.VDCApiCall(api_url, apiKey, secret)
 # STEP: Load the cluster data from the JSON file
 with open(datafile) as json_file:
    zonesDict = json.load(json_file)
+if rename:
+   newJsonFilename = datafile.split(".json")[0] + "-deploydata.json"
 
 # STEP: Check if VM exists (ie. not already deleted) and check VM state
 zNotExist = []
@@ -83,7 +88,10 @@ for z in zonesDict:
          zNotExist = zNotExist + [z]
          
 if set(zonesDict.keys())-set(zNotExist) == set([]):
-   print("All VMs are already deleted. Nothing to do.")
+   print("All VMs are already deleted. Nothing to delete.")
+   if rename:
+      print("Renaming json file from %s to %s" % (datafile, newJsonFilename))
+      shutil.move(datafile, newJsonFilename)
    sys.exit("FATAL: Program terminating")
            
 # STEP: Confirm destruction of virtual machines
@@ -126,6 +134,9 @@ while not destroyAllComplete:
             print("VM %s destroyed in zone %s. %d zones left to complete." % (zonesDict[z]['virtualmachineid'],zonesDict[z]['name'],countdown))                
    if countdown == 0:
       destroyAllComplete = True
+      if rename:
+         print("Renaming json file from %s to %s" % (datafile, newJsonFilename))
+         shutil.move(datafile, newJsonFilename)
       print("Finished the destruction of virtual machines. Program terminating.")
    else:
       if displayProgress:
