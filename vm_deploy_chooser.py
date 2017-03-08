@@ -80,15 +80,15 @@ if __name__ == '__main__':
     # STEP: Parse the command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
-                    help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
+                    help="path/name of the config file to be used for the API URL and API keys (default: ~/.vdcapi)")
     parser.add_argument("-m", "--mode", choices=['deploy','d','print','p'], default='print',
                     help="specify the output mode: deploy (deploy the VM) or print (print the API call) (default: print)")
     parser.add_argument("-f", "--format", choices=['json','j','cloudmonkey','c','url'], default='json',
                         help="specify the format of the printed API call: json, cloudmonkey or url (default: json)")
     parser.add_argument("-r", "--region", choices=['Europe','europe','USA','usa','Asia','asia'],
-                    default='Europe', help="specify the VDC region: Europe, USA or Asia (default Europe)")
+                    default='Europe', help="specify the VDC region: Europe, USA or Asia (default: Europe)")
     parser.add_argument("-k", "--keys", action='store_true', help="ask for choice of SSH keys")
-    parser.add_argument("-u", "--userdata", action='store_true', help="ask for input of userdata by filename")
+    parser.add_argument("-u", "--userdata", action='store_true', help="ask for input of userdata from plain text file")
     parser.add_argument("-p", "--portforwarding", action='store_true', help="ask for input of portforwarding port(s) and execute create rules or output the create commands")
     parser.add_argument("-a", "--affinity", action='store_true', help="[NOT IMPLEMENTED] ask for selection of affinity group(s)")
     parser.add_argument("-i", "--iso", action='store_true', help="[NOT IMPLEMENTED] deploy from an ISO image")
@@ -443,8 +443,8 @@ if __name__ == '__main__':
               rulenum = 0
               for pfruleparams in pfrule_params_list:
                  rulenum += 1
-                 print("Create portforwarding rule %d:" % (rulenum))
                  pfruleparams['virtualmachineid'] = vm_id
+                 print("Create portforwarding rule %d: %s" % (rulenum, pfruleparams))
                  try:
                     result_pf = api.createPortForwardingRule(pfruleparams)
                     job_id_pf = result_pf['jobid']

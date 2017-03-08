@@ -45,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument("-a", "--arguments", type=json.loads, default='{}', help="arguments for the API command (you must use single quotes outside, double quotes inside)")
     parser.add_argument("-e", "--execute", action='store_true', help="execute the API call")
     parser.add_argument("-m", "--method", choices=['GET','POST'], default='GET',
-                        help="specify the HTTP request method: GET (default) or POST")
+                        help="specify the HTTP request method: GET or POST (default: GET)")
     parser.add_argument("-o", "--outfile", default="", help="name of output file to receive the API call response") 
     parser.add_argument("-t", "--timeout", action="store_true", help="add expiry timeout to the API call URL (see -u for setting expiry time)")
     parser.add_argument("-u", "--expiryTime", type=int, default=3600, help="expiry time duration for the API call in seconds (default: 3600s)")
