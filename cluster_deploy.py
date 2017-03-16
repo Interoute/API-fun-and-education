@@ -154,6 +154,23 @@ else:
    zonesDict[pz]['primary'] = True
    primaryZone = pz
 
+# STEP: Check for any existing virtual machines using the cluster name in the requested zones - if any exist then exit
+existingVmNames = {}
+existingVmConflict = False
+print("CHECKING for cluster name already in use for an existing VM in a deployment zone")
+for z in zonesDict:
+   resultVmCheck = api.listVirtualMachines({'region':zonesDict[z]['region'],'zoneid':zonesDict[z]['id'],'name':clusterName})
+   if resultVmCheck != {}:
+      existingVmConflict = True
+      for v in resultVmCheck['virtualmachine']:
+          print('> Existing VM found \'%s\' in zone %s (region %s)' % (v['name'],v['zonename'],zonesDict[z]['region']))
+if existingVmConflict:
+   print("ERROR: Cluster name already in use for virtual machine(s)")
+   sys.exit("FATAL: Program terminating")
+else:
+   print("> OK: No VMs found with the cluster name")      
+      
+      
 # STEP: Check and if required create private networks in the zones
 # If there is more than one private DC network in the zone and the DCG, then the first one is selected
 for z in zonesDict:

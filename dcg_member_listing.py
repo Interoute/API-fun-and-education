@@ -10,9 +10,9 @@
 #
 # The VDC account used must be able to access the VDC regions in the argument 'regionlist'.
 # Use the regionlist argument to change the regions for a limited account (for example, a 14-day trial account is excluded from Asia region)
-# Example of passing region names as arguments (do not use bracesm, quotes or commas): 'python dcg_member_listing.py --regionlist Europe USA -n'
+# Example of passing region names as arguments (do not use braces, quotes or commas): 'python dcg_member_listing.py --regionlist Europe USA -n'
 #
-# Copyright (C) Interoute Communications Limited, 2015
+# Copyright (C) Interoute Communications Limited, 2017
 
 from __future__ import print_function
 import vdc_api_call as vdc
@@ -116,6 +116,7 @@ if __name__ == '__main__':
             for r in vdcRegions:
                if networksLists[r]['network'] != []:
                   for n in networksLists[r]['network']:
+                      # **** THIS LOGIC NEEDS TO BE FIXED ****
                       if n['dcgfriendlyname'] == d['name']:
                          members.append([n['cidr'],n['name'],n['zonename'],r,n['id'],n['isprovisioned'],n['displaytext']])
             if len(members)>0:
