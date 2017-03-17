@@ -5,8 +5,7 @@
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 # See the repo: https://github.com/Interoute/API-fun-and-education
 #
-# You can pass options via the command line: type 'python dcg_member_listing.py -h'
-# for usage information
+# You can pass options via the command line: type 'python dcg_member_listing.py -h' for usage information
 #
 # The VDC account used must be able to access the VDC regions in the argument 'regionlist'.
 # Use the regionlist argument to change the regions for a limited account (for example, a 14-day trial account is excluded from Asia region)
@@ -85,9 +84,12 @@ if __name__ == '__main__':
     if show_netmem:
        vmLists = {}
     for r in vdcRegions:
-       networksLists[r] = api.listNetworks({'region': r, 'subtype': 'privatedirectconnect'})
-       if networksLists[r]['count'] == 0: # there are no PrivateDirectconnect networks in this region
-          networksLists[r]['network'] = []
+       nlistPDC = api.listNetworks({'region': r, 'subtype': 'privatedirectconnect'})
+       nlistPDCEgress = api.listNetworks({'region': r, 'subtype': 'privatedirectconnectwithgatewayservicesegress'})
+       if nlistPDC['count'] == 0 and nlistPDCEgress['count'] == 0: # there are no PrivateDirectConnect networks in this region
+          networksLists[r] = {'count':0, 'network':[]}
+       else:
+          networksLists[r] = {'count': nlistPDC['count'] + nlistPDCEgress['count'], 'network': nlistPDC['network'] + nlistPDCEgress['network']}
        if show_netmem:
           zonesResponse = api.listZones({'region':r})
           zonesList = [z['name'] for z in zonesResponse['zone']]
@@ -109,29 +111,37 @@ if __name__ == '__main__':
         else:
             print("\n** Only these regions will be scanned and their Private Direct Connect networks shown: %s" % (vdcRegions))
         print("\n** Networks which have 'isprovisioned' set to False are labelled with '/NotProv/' and are not functional")
-        print("** Output may not be correct for DCGs and networks that were not created with NetworkAPI functions because\n** they may be missing the information in the listNetworks call which identifies the DCG membership of the network\n") 
+        print("** Output may not be correct for DCGs and networks that were not created with NetworkAPI functions because\n** they may be missing the information in the listNetworks call which identifies the DCG membership of the network.")
+        print("** (+E) denotes networks with gateway services for Internet egress\n")
         for d in dcgList['directconnectgroups']:
             print(" "+unichr(0x2015)+' \'%s\' (dcgid: %s)' % (d['name'], d['id']))
             members = []
             for r in vdcRegions:
                if networksLists[r]['network'] != []:
                   for n in networksLists[r]['network']:
-                      # **** THIS LOGIC NEEDS TO BE FIXED ****
                       if n['dcgfriendlyname'] == d['name']:
-                         members.append([n['cidr'],n['name'],n['zonename'],r,n['id'],n['isprovisioned'],n['displaytext']])
+                         if 'isprovisioned' not in n:
+                            n['isprovisioned'] = 'Unknown'
+                         members.append([n['cidr'],n['name'],n['zonename'],r,n['id'],n['isprovisioned'],n['displaytext'],n['subtype']])
             if len(members)>0:
                 members = sorted(members, key=lambda x: x[2]) #sort by zonename
                 members = sorted(members, key=lambda x: x[3]) #sort by region
                 for i in range(len(members)):
-                    if members[i][5]:
-                       provisionedLabel = ""
+                    if members[i][7] == 'privatedirectconnectwithgatewayservicesegress':
+                       egressLabel = " (+E)"
                     else:
+                       egressLabel = ""
+                    if members[i][5] == True:
+                       provisionedLabel = ""
+                    elif members[i][5] == False:
                        provisionedLabel = "/NotProv/ "
+                    elif members[i][5] == 'Unknown':
+                       provisionedLabel = "/ProvUnknown/ "
                     if i==len(members)-1:  #if this is last item in list
                        if members[i][1] != members[i][6]: #if network 'name' and 'displaytext' are not the same
-                          print("   "+unichr(0x2514)+" %s: %s'%s'|'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][6],members[i][2],members[i][3]))
+                          print("   "+unichr(0x2514)+" %s%s: %s'%s'|'%s' (%s, %s)" % (members[i][0],egressLabel,provisionedLabel,members[i][1],members[i][6],members[i][2],members[i][3]))
                        else:
-                          print("   "+unichr(0x2514)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][2],members[i][3]))
+                          print("   "+unichr(0x2514)+" %s%s: %s'%s' (%s, %s)" % (members[i][0],egressLabel,provisionedLabel,members[i][1],members[i][2],members[i][3]))
                        if show_netmem:
                            if vmLists[members[i][2]] != {}:
                               print_network_members(vmLists[members[i][2]],members[i][4],members[i][5],"        ")
@@ -139,9 +149,9 @@ if __name__ == '__main__':
                               print("        " + "*(NO MEMBERS)")
                     else:
                        if members[i][1] != members[i][6]: #if network 'name' and 'displaytext' are not the same
-                          print("   "+unichr(0x251C)+" %s: %s'%s'|'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][6],members[i][2],members[i][3]))
+                          print("   "+unichr(0x251C)+" %s%s: %s'%s'|'%s' (%s, %s)" % (members[i][0],egressLabel,provisionedLabel,members[i][1],members[i][6],members[i][2],members[i][3]))
                        else:
-                          print("   "+unichr(0x251C)+" %s: %s'%s' (%s, %s)" % (members[i][0],provisionedLabel,members[i][1],members[i][2],members[i][3]))
+                          print("   "+unichr(0x251C)+" %s%s: %s'%s' (%s, %s)" % (members[i][0],egressLabel,provisionedLabel,members[i][1],members[i][2],members[i][3]))
                        if show_netmem:
                            if vmLists[members[i][2]] != {}:
                               print_network_members(vmLists[members[i][2]],members[i][4],members[i][5],"   "+unichr(0x2502)+"    ")
