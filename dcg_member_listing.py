@@ -22,6 +22,7 @@ import string
 import datetime
 import argparse
 import re
+import sys
 
 def print_network_members(vmList,networkid,isProvisioned,prefixChars):
    networkmembers = []
@@ -49,6 +50,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
                     help="path/name of the config file to be used for the API URL and API keys")
+    parser.add_argument("-d", "--dcgname", help="Show information only for the specified DCG name")
+    parser.add_argument("-b", "--dcgid", help="Show information only for the specified DCG ID")
     parser.add_argument("-n","--netmem",action='store_true',
                     help="show the VM members of the Private Direct Connect networks")
     parser.add_argument("-r","--regionlist",default=['Europe', 'USA', 'Asia'],nargs='+',
@@ -56,6 +59,8 @@ if __name__ == '__main__':
     # Note : The VDC account used must be able to access all of the VDC regions in the argument 'regionlist'.
     # Use this argument to change the list for a limited account (for example, a 14-day trial account is excluded from Asia region)
     config_file = parser.parse_args().config
+    dcgid_requested = parser.parse_args().dcgid
+    dcgname_requested = parser.parse_args().dcgname
     show_netmem = parser.parse_args().netmem
     vdcRegions = parser.parse_args().regionlist
 
@@ -79,7 +84,18 @@ if __name__ == '__main__':
     api = vdc.VDCApiCall(api_url, apiKey, secret)
  
     # STEP 4: API calls to get the information about DCGs and networks
-    dcgList = api.listDirectConnectGroups({})
+    if dcgid_requested:
+       dcgList = api.listDirectConnectGroups({'id':dcgid_requested})
+       if dcgList['count'] == 0:
+          print("ERROR: The dcgid input did not match a DCG in this VDC account.")
+          sys.exit("FATAL: Program terminating")
+    elif dcgname_requested:
+       dcgList = api.listDirectConnectGroups({'name':dcgname_requested})
+       if dcgList['count'] == 0:
+          print("ERROR: The dcgname input did not match a DCG in this VDC account.")
+          sys.exit("FATAL: Program terminating")
+    else:   
+       dcgList = api.listDirectConnectGroups({})
     networksLists = {}
     if show_netmem:
        vmLists = {}
@@ -104,8 +120,12 @@ if __name__ == '__main__':
     # STEP 5: Process the information from the API calls
     try:
         checkTime = datetime.datetime.utcnow() # get the current time (UTC = GMT)
-        print("\nDirect Connect Groups for the account '%s' checked at %s:"
+        print("\nDirect Connect Group listing for the account '%s' checked at %s:"
             % (api.getApiLimit({})['apilimit']['account'], checkTime.strftime("%Y-%m-%d %H:%M:%S UTC")))
+        if dcgid_requested:
+            print("\n** Results are shown only for dcgid=%s" % dcgid_requested)
+        elif dcgname_requested:
+            print("\n** Results are shown only for dcgname=\'%s\'" % dcgname_requested)
         if len(vdcRegions)==3:
             print("\n** All VDC regions are being scanned for Private Direct Connect networks")
         else:
