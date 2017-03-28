@@ -8,7 +8,7 @@
 # You can pass options via the command line: type 'python networks_member_listing.py -h'
 # for usage information
 #
-# Copyright (C) Interoute Communications Limited, 2016
+# Copyright (C) Interoute Communications Limited, 2017
 
 from __future__ import print_function
 import vdc_api_call as vdc
@@ -108,18 +108,24 @@ if __name__ == '__main__':
         if zonenameFilter:
            print("***Results filtered for zone name(s) starting with '%s'" % (zonenameFilter))
         for network in networksList['network']:
+            if network['subtype']=='privatedirectconnectwithgatewayservicesegress':
+               egressLabel = " (+E)"
+            else:
+               egressLabel = ""
             if network['name'] != network['displaytext']:
-               print(" "+unichr(0x2015)+' \'%s\'|\'%s\' (Zone: %s, CIDR: %s' % (
+               print(" "+unichr(0x2015)+' \'%s\'|\'%s\' (Zone: %s, CIDR: %s%s' % (
                   network['name'],
                   network['displaytext'],
                   network['zonename'],
-                  network['cidr']
+                  network['cidr'],
+                  egressLabel
                 ), end='')
             else:
-                print(" "+unichr(0x2015)+' \'%s\' (Zone: %s, CIDR: %s' % (
+                print(" "+unichr(0x2015)+' \'%s\' (Zone: %s, CIDR: %s%s' % (
                   network['name'],
                   network['zonename'],
-                  network['cidr']
+                  network['cidr'],
+                  egressLabel
                 ), end='')
                
             #FIND EXTERNAL IP ADDRESSES IF THEY EXIST FOR THE NETWORK
@@ -151,6 +157,9 @@ if __name__ == '__main__':
                      print("]")
                else: # no ipaddressid values to print
                   print("]")
+            #PRINT EGRESS FOR 'PRIVATE DIRECT CONNECT WITH INTERNET EGRESS' NETWORKS
+            if network['subtype']=='privatedirectconnectwithgatewayservicesegress':
+               print("   " + unichr(0x2502) + "(egress: PRIVATE NETWORK WITH INTERNET EGRESS ON ALL PORTS)")
             #GET AND PRINT EGRESS RULES FOR 'LOCAL WITH GATEWAY' NETWORKS
             if showEgress and network['subtype']=='internetgateway':
                print("   " + unichr(0x2502) + "(egress: ", end='')
@@ -247,16 +256,20 @@ if __name__ == '__main__':
                        if pfRules != []:
                           print(" (ports:",end='')
                           for p in pfRules:
+                              if p['protocol']=='udp':
+                                 udpLabel = "UDP"
+                              else:
+                                 udpLabel = "" 
                               if externalIpMultiple:
                                  if p['publicport']!=p['publicendport']:
-                                    print(" [%s:%s/%s]->"%(p['ipaddress'],p['publicport'],p['publicendport']),end='')
+                                    print(" %s[%s:%s/%s]->"%(udpLabel,p['ipaddress'],p['publicport'],p['publicendport']),end='')
                                  else:
-                                    print(" [%s:%s]->"%(p['ipaddress'],p['publicport']),end='')
+                                    print(" %s[%s:%s]->"%(udpLabel,p['ipaddress'],p['publicport']),end='')
                               else:
                                  if p['publicport']!=p['publicendport']:
-                                    print(" [%s/%s]->"%(p['publicport'],p['publicendport']),end='')
+                                    print(" %s[%s/%s]->"%(udpLabel,p['publicport'],p['publicendport']),end='')
                                  else:
-                                    print(" [%s]->"%(p['publicport']),end='')
+                                    print(" %s[%s]->"%(udpLabel,p['publicport']),end='')
                               if p['privateport']!=p['privateendport']:
                                  print("[%s/%s]"%(p['privateport'],p['privateendport']),end='')
                               else:
