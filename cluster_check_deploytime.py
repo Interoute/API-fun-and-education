@@ -13,8 +13,8 @@
 #
 
 from __future__ import print_function
-import vdc_api_call as vdc
-import getpass
+##import vdc_api_call as vdc
+##import getpass
 import json
 import os
 import sys
@@ -25,33 +25,9 @@ import re
 
 # STEP: Parse the command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~'), '.vdcapi'),
-                help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
 parser.add_argument("-f", "--filename", help="name of input file with the cluster setup information in JSON format")
-##parser.add_argument("-x", "--expunge", action='store_true', help="expunge the virtual machines (otherwise they will put into Destroyed state)")
-config_file = parser.parse_args().config
 datafile = parser.parse_args().filename
-##expunge = parser.parse_args().expunge
     
-# STEP: If config file is found, read its content,
-# else query user for the URL, API key, Secret key
-if os.path.isfile(config_file):
-    with open(config_file) as fh:
-        data = fh.read()
-        config = json.loads(data)
-        api_url = config['api_url']
-        apiKey = config['api_key']
-        secret = config['api_secret']
-else:
-    print('API url (e.g. http://10.220.18.115:8080/client/api):', end='')
-    api_url = raw_input()
-    print('API key:', end='')
-    apiKey = raw_input()
-    secret = getpass.getpass(prompt='API secret:')
-
-# STEP: Create the API access object
-api = vdc.VDCApiCall(api_url, apiKey, secret)
-
 # STEP: Load the cluster data from the JSON file
 with open(datafile) as json_file:
    zonesDict = json.load(json_file)
