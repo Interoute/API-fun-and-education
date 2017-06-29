@@ -58,7 +58,7 @@ parser.add_argument("-m", "--accessmode", choices=['single','all'], default='sin
                     help="specify the public Internet access mode: single VM with Internet or all VM with Internet (default: single)")
 parser.add_argument("-p", "--primaryzone", default="DEFAULT", help="name of zone which should be the access point for single-zone Internet access (if not set, primary zone will be the first in the list of zones)")
 parser.add_argument("-q", "--publicport", type=int, default=62200, help="Public SSH port to be assigned for the public Internet network(s)")
-parser.add_argument("-k", "--keypair", help="Keypair name (it must exist for all VDC regions)")
+parser.add_argument("-k", "--keypair", help="Keypair name (it must exist for all VDC regions)", default='')
 parser.add_argument("-u", "--userdatafile", default='', help="filename for userdata to use in deployment")
 config_file = parser.parse_args().config
 dcgID = parser.parse_args().dcgid
@@ -331,7 +331,11 @@ for z in zonesDict:
    try:
       print("Executing deployVirtualMachine for zone %s" % zonesDict[z]['name'])
       ###print("  DEBUG netIDs=%s" % netIDs)
-      deployResult = api.deployVirtualMachine({'region': zonesDict[z]['region'], 'zoneid':zonesDict[z]['id'],'templateid':zonesDict[z]['templateid'],'serviceofferingid':zonesDict[z]['serviceofferingid'],'name':vmName, 'displayname':vmName, 'networkids':netIDs, 'keypair':keypairName})
+      deployParams = {'region': zonesDict[z]['region'], 'zoneid':zonesDict[z]['id'],'templateid':zonesDict[z]['templateid'],'serviceofferingid':zonesDict[z]['serviceofferingid'],'name':vmName, 'displayname':vmName, 'networkids':netIDs, 'keypair':keypairName}
+      # if keypair is not in the input, then do not use it for the deploy call
+      if keypairName == '': 
+         deployParams.pop('keypair', None)
+      deployResult = api.deployVirtualMachine(deployParams)
       zonesDict[z]['deployjobid'] = deployResult['jobid']
    except:
       print("ERROR: Failure occurred in API call deployVirtualMachine for zone %s" % zonesDict[z]['name'])
