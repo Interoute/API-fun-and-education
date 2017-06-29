@@ -81,7 +81,7 @@ publicPort = parser.parse_args().publicport
 accessMode = parser.parse_args().accessmode
 keypairName = parser.parse_args().keypair
 userdataFilename = parser.parse_args().userdatafile
-globalTimeout = parser.parse_args().globaltimeout
+globalTimeout = int(parser.parse_args().globaltimeout)
 
 # Check if dcgid was input
 if dcgID==-1:
@@ -400,11 +400,11 @@ while not deployAllComplete:
       elif zonesDict[z]['deployjobid'] == 'MISSING':
          countdown = countdown - 1
          zonesDict[z]['deploycomplete'] = True
-   # check if time in deployment exceeds value of globalTimeout
-   if (datetime.datetime.utcnow() - startTime).seconds > globalTimeout:
+   # check if time in deployment loop exceeds value of globalTimeout
+   if (datetime.datetime.utcnow() - deployStartTime).seconds > globalTimeout:
       deployAllComplete = True
       print("ALERT: Global timeout of %d seconds for VM deployment has been exceeded. Quitting deployment loop and continuing to next step..." % (globalTimeout))
-   if countdown == 0:
+   elif countdown == 0:
       deployAllComplete = True
       print("Finished the deployment of virtual machines. Continuing to next step...")
    else:
