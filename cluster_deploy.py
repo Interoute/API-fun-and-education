@@ -380,7 +380,10 @@ while not deployAllComplete:
                zonesDict[z]['publicipaddressid'] = ipdata['id']
             zonesDict[z]['virtualmachineid'] = result['jobresult']['virtualmachine']['id']
             zonesDict[z]['virtualmachinename'] = result['jobresult']['virtualmachine']['name']
-            zonesDict[z]['keypair'] = result['jobresult']['virtualmachine']['keypair']
+            if keypairName == '':
+               zonesDict[z]['keypair'] = None 
+            else:
+               zonesDict[z]['keypair'] = result['jobresult']['virtualmachine']['keypair']
             zonesDict[z]['password'] = result['jobresult']['virtualmachine']['password']
             print('')
             print("VM deploy completed in zone %s. %d zones left to complete." % (zonesDict[z]['name'],countdown))
