@@ -48,18 +48,19 @@ parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~
                 help="path/name of the config file to be used for the API URL and API keys (default is ~/.vdcapi)")
 parser.add_argument("-n", "--clustername", default="DEFAULT", help="name of the cluster to be deployed (default is 'CLUSTER-' + creation time)")
 parser.add_argument("-d", "--dcgid", default=-1, help="ID of the Direct Connect Group to be used for private networking")
-parser.add_argument("-t", "--templatename", help="Name of the virtual machine template (it must be available in all of the deployment zones!)")
+parser.add_argument("-t", "--templatename", help="name of the virtual machine template (it must be available in all of the deployment zones!)")
 parser.add_argument("-s", "--serviceoffering", default='1024-1',
-                    help="Name of the service offering ('RAM-CPU' same format as given by listServiceOfferings; default='1024-1')")
+                    help="name of the service offering ('RAM-CPU' same format as given by listServiceOfferings; default='1024-1')")
 parser.add_argument("-a", "--allzones", action='store_true', help="deploy cluster in all regions and all zones")
 parser.add_argument("-z", "--zones", nargs='+', help="list of zonenames where cluster is to be deployed (if -a is used, this input will be ignored)")
 parser.add_argument("-o", "--outfile", default="DEFAULT", help="name of output file to receive the cluster setup information (default is CLUSTERNAME.json)")
 parser.add_argument("-m", "--accessmode", choices=['single','all'], default='single',
                     help="specify the public Internet access mode: single VM with Internet or all VM with Internet (default: single)")
 parser.add_argument("-p", "--primaryzone", default="DEFAULT", help="name of zone which should be the access point for single-zone Internet access (if not set, primary zone will be the first in the list of zones)")
-parser.add_argument("-q", "--publicport", type=int, default=62200, help="Public SSH port to be assigned for the public Internet network(s)")
-parser.add_argument("-k", "--keypair", help="Keypair name (it must exist for all VDC regions)", default='')
+parser.add_argument("-q", "--publicport", type=int, default=62200, help="public SSH port to be assigned for the public Internet network(s)")
+parser.add_argument("-k", "--keypair", default='', help="keypair name which must exist for all VDC regions (default = empty string)")
 parser.add_argument("-u", "--userdatafile", default='', help="filename for userdata to use in deployment")
+parser.add_argument("-g", "--globaltimeout", default=900, help="maximum time in seconds to wait for VM deployments to complete (default: 900)")
 config_file = parser.parse_args().config
 dcgID = parser.parse_args().dcgid
 templateName = parser.parse_args().templatename
@@ -80,6 +81,7 @@ publicPort = parser.parse_args().publicport
 accessMode = parser.parse_args().accessmode
 keypairName = parser.parse_args().keypair
 userdataFilename = parser.parse_args().userdatafile
+globalTimeout = parser.parse_args().globaltimeout
 
 # Check if dcgid was input
 if dcgID==-1:
@@ -353,6 +355,7 @@ checkDelay = 2
 displayProgress = True
 deployAllComplete = False
 countdown = len(zonesDict)
+deployStartTime = datetime.datetime.utcnow()
 while not deployAllComplete:
    for z in zonesDict:
       if zonesDict[z]['deployjobid'] != 'MISSING' and not zonesDict[z]['deploycomplete']:
@@ -397,6 +400,10 @@ while not deployAllComplete:
       elif zonesDict[z]['deployjobid'] == 'MISSING':
          countdown = countdown - 1
          zonesDict[z]['deploycomplete'] = True
+   # check if time in deployment exceeds value of globalTimeout
+   if (datetime.datetime.utcnow() - startTime).seconds > globalTimeout:
+      deployAllComplete = True
+      print("ALERT: Global timeout of %d seconds for VM deployment has been exceeded. Quitting deployment loop and continuing to next step..." % (globalTimeout))
    if countdown == 0:
       deployAllComplete = True
       print("Finished the deployment of virtual machines. Continuing to next step...")
