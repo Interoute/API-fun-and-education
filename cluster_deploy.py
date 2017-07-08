@@ -403,7 +403,7 @@ while not deployAllComplete:
    # check if time in deployment loop exceeds value of globalTimeout
    if (datetime.datetime.utcnow() - deployStartTime).seconds > globalTimeout:
       deployAllComplete = True
-      print("ALERT: Global timeout of %d seconds for VM deployment has been exceeded. Quitting deployment loop and continuing to next step..." % (globalTimeout))
+      print("\nALERT: Global timeout of %d seconds for VM deployment has been exceeded. Quitting deployment loop and continuing to next step..." % (globalTimeout))
    elif countdown == 0:
       deployAllComplete = True
       print("Finished the deployment of virtual machines. Continuing to next step...")

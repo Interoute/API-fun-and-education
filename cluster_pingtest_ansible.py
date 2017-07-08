@@ -2,7 +2,7 @@
 #
 # Python script for the Interoute Virtual Data Centre API:
 #   Name: cluster_pingtest_ansible.py:
-#   Purpose: Use Ansible to do a complete VM-to-VM ping test for a cluster of virtual machines created by cluster_deploy.py
+#   Purpose: Use Ansible to do a complete VM-to-VM ping test for a cluster of virtual machines already created by cluster_deploy.py
 #   Requires: class VDCApiCall in the file vdc_api_call.py
 #   Requires: Ansible runnable in the working directory
 #   Requires: Ansible hosts inventory file (see cluster_write_ansiblehosts.py)
@@ -11,7 +11,7 @@
 # You can pass options via the command line: type 'python cluster_pingtest_anisble.py -h'
 # for usage information
 #
-# Copyright (C) Interoute Communications Limited, 2016
+# Copyright (C) Interoute Communications Limited, 2017
 #
 # Notes
 #  This program assumes the cluster data provided is healthy and not missing required values
