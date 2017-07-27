@@ -27,7 +27,9 @@ import numpy as np
 # STEP: Parse the command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--filename", help="name of input file with the cluster setup information in JSON format")
+parser.add_argument("-s", "--summaryonly", action='store_true', help="Only output the summary statistics (number_VM, max, min, range, mean, median)")
 datafile = parser.parse_args().filename
+outputSummaryOnly = parser.parse_args().summaryonly
     
 # STEP: Load the cluster data from the JSON file
 with open(datafile) as json_file:
@@ -35,7 +37,8 @@ with open(datafile) as json_file:
 
 # STEP: Extract the 'created' and 'deploytime' data
 deployTimeList = []
-print("%s, %s, %s, %s, %s" % ("VDC_zone", "VM_created_datetime", "VM_deploytime", "VM_created_date", "VM_created_time"))    
+if not outputSummaryOnly:
+   print("%s, %s, %s, %s, %s" % ("VDC_zone", "VM_created_datetime", "VM_deploytime", "VM_created_date", "VM_created_time"))    
 for z in zonesDict:
    if 'created' in zonesDict[z].keys():
       if zonesDict[z]['created'] != "NA":
@@ -44,9 +47,14 @@ for z in zonesDict:
       else:
          zonesDict[z]['createddate'] = "NA"
          zonesDict[z]['createdtime'] = "NA"
-      print("%s, %s, %d, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), zonesDict[z]['created'], zonesDict[z]['deploytime'],  zonesDict[z]['createddate'], zonesDict[z]['createdtime']))
+      if not outputSummaryOnly:
+         print("%s, %s, %d, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), zonesDict[z]['created'], zonesDict[z]['deploytime'],  zonesDict[z]['createddate'], zonesDict[z]['createdtime']))
       deployTimeList += [zonesDict[z]['deploytime']]
    else:
-      print("%s, %s, %s, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), "NA", "NA", "NA", "NA"))
+      if not outputSummaryOnly:
+         print("%s, %s, %s, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), "NA", "NA", "NA", "NA"))
+
 data = np.array(deployTimeList)
-print("\nSUMMARY STATISTICS:\nN, MIN, MAX, RANGE, MEAN, MEDIAN\n%s, %s, %s, %s, %s, %s" % (len(deployTimeList), np.nanmin(data), np.nanmax(data), np.ptp(data), np.nanmean(data), np.median(data)))
+if not outputSummaryOnly:
+   print("\nSUMMARY STATISTICS:\nN, MIN, MAX, RANGE, MEAN, MEDIAN")
+print("%s, %s, %s, %s, %s, %s" % (len(deployTimeList), np.nanmin(data), np.nanmax(data), np.ptp(data), np.nanmean(data), np.median(data)))
