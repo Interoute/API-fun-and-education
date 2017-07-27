@@ -41,6 +41,7 @@ import ipaddress
 from netaddr import *
 import re
 import random
+import numpy as np
 
 # STEP: Parse the command line arguments
 parser = argparse.ArgumentParser()
@@ -444,5 +445,6 @@ with open(outfile, 'w') as outf:
    json.dump(zonesDict, outf)
 print("Cluster configuration data written to output file. Program terminating.")
 
-
-
+# Print summary statistics for VM deploy times
+deploydata = [zonesDict[z]['deploytime'] for z in zonesDict if 'deploytime' in zonesDict[z].keys()]
+print("\nDEPLOY TIME SUMMARY STATISTICS:\nN, MIN, MAX, RANGE, MEAN, MEDIAN\n%s, %s, %s, %s, %s, %s" % (len(deploydata), np.nanmin(deploydata), np.nanmax(deploydata), np.ptp(deploydata), np.nanmean(deploydata), np.median(deploydata)))
