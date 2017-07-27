@@ -23,6 +23,7 @@ import pprint
 import argparse
 import re
 import time
+import datetime
 
 # STEP: Parse the command line arguments
 parser = argparse.ArgumentParser()
@@ -31,10 +32,12 @@ parser.add_argument("-c", "--config", default=os.path.join(os.path.expanduser('~
 parser.add_argument("-f", "--filename", help="name of input file with the cluster setup information in JSON format")
 parser.add_argument("-x", "--expunge", action='store_true', help="expunge the virtual machines (otherwise they will put into Destroyed state)")
 parser.add_argument("-r", "--rename", action='store_true', help="rename the JSON info file with ending '-deploydata.json'")
+parser.add_argument("-g", "--globaltimeout", default=400, help="maximum time in seconds to wait for the VM destruction to complete (default: 400)")
 config_file = parser.parse_args().config
 datafile = parser.parse_args().filename
 expunge = parser.parse_args().expunge
 rename = parser.parse_args().rename
+globalTimeout = int(parser.parse_args().globaltimeout)
     
 # STEP: If config file is found, read its content,
 # else query user for the URL, API key, Secret key
@@ -120,6 +123,7 @@ checkDelay = 2
 displayProgress = True
 destroyAllComplete = False
 countdown = len(set(zonesDict.keys()) - set(zNotExist))
+destroyStartTime = datetime.datetime.utcnow()
 while not destroyAllComplete:
    for z in set(zonesDict.keys()) - set(zNotExist):
       if zonesDict[z]['deploycomplete'] and not zonesDict[z]['destroycomplete']:
@@ -138,12 +142,15 @@ while not destroyAllComplete:
          print("Renaming json file from %s to %s" % (datafile, newJsonFilename))
          shutil.move(datafile, newJsonFilename)
       print("Finished the destruction of virtual machines. Program terminating.")
+   elif (datetime.datetime.utcnow() - destroyStartTime).seconds > globalTimeout:
+      # check if time in the VM destroy loop exceeds value of globalTimeout
+      destroyAllComplete = True
+      print("\nALERT: Global timeout of %d seconds has been exceeded. Exiting. Rerun the program to check status of all VMs in the cluster." % (globalTimeout))
    else:
       if displayProgress:
          print('.', end='')
          sys.stdout.flush()
       time.sleep(checkDelay)
         
-
 
 
