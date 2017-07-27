@@ -21,6 +21,7 @@ import sys
 import pprint
 import argparse
 import re
+import numpy as np
 #import time
 
 # STEP: Parse the command line arguments
@@ -33,6 +34,7 @@ with open(datafile) as json_file:
    zonesDict = json.load(json_file)
 
 # STEP: Extract the 'created' and 'deploytime' data
+deployTimeList = []
 print("%s, %s, %s, %s, %s" % ("VDC_zone", "VM_created_datetime", "VM_deploytime", "VM_created_date", "VM_created_time"))    
 for z in zonesDict:
    if 'created' in zonesDict[z].keys():
@@ -43,5 +45,8 @@ for z in zonesDict:
          zonesDict[z]['createddate'] = "NA"
          zonesDict[z]['createdtime'] = "NA"
       print("%s, %s, %d, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), zonesDict[z]['created'], zonesDict[z]['deploytime'],  zonesDict[z]['createddate'], zonesDict[z]['createdtime']))
+      deployTimeList += [zonesDict[z]['deploytime']]
    else:
       print("%s, %s, %s, %s, %s" % (re.sub('[ ()]','', zonesDict[z]['name']), "NA", "NA", "NA", "NA"))
+data = np.array(deployTimeList)
+print("\nSUMMARY STATISTICS:\nN, MIN, MAX, RANGE, MEAN, MEDIAN\n%s, %s, %s, %s, %s, %s" % (len(deployTimeList), np.nanmin(data), np.nanmax(data), np.ptp(data), np.nanmean(data), np.median(data)))
