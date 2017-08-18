@@ -1,9 +1,10 @@
-API programming for fun and education with Interoute Virtual Data Centre
-========================================================================
+API programming with Interoute Virtual Data Centre
+==================================================
 
 This repository contains demonstration and utility programs for working with the API of [Interoute Virtual Data Centre](https://cloudstore.interoute.com/what_is_vdc).
 
-Details can be found in the blog posts written by Phillip Kent: http://cloudstore.interoute.com/blogs/PhillipKent
+Details of some of the programs can be found in these blog posts: http://cloudstore.interoute.com/blogs/PhillipKent
+
 
 API configuration file
 ----------------------
