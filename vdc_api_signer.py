@@ -20,7 +20,7 @@
 # $ python vdc_api_signer.py -c vdcapi -x listVirtualMachines -a '{"region":"asia", "zoneid":"f2e16beb-b8b1-4f1d-b211-6b6feb6bb394"}'
 #
 # Reference: Accepting a dictionary as an argument with argparse and python
-# http://stackoverflow.com/questions/18608812/accepting-a-dictionary-as-an-argument-with-argparse-and-python
+#   http://stackoverflow.com/questions/18608812/accepting-a-dictionary-as-an-argument-with-argparse-and-python
 
 from __future__ import print_function
 import base64
@@ -48,7 +48,7 @@ if __name__ == '__main__':
                         help="specify the HTTP request method: GET or POST (default: GET)")
     parser.add_argument("-o", "--outfile", default="", help="name of output file to receive the API call response") 
     parser.add_argument("-t", "--timeout", action="store_true", help="add expiry timeout to the API call URL (see -u for setting expiry time)")
-    parser.add_argument("-u", "--expiryTime", type=int, default=3600, help="expiry time duration for the API call in seconds (default: 3600s)")
+    parser.add_argument("-u", "--expiryTime", type=int, default=600, help="expiry time duration for the API call in seconds (default: 600s)")
     config_file = parser.parse_args().config
     command = parser.parse_args().command
     args = parser.parse_args().arguments
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     request_data +=  "&signature=%s" % sig
 
     if timeoutOn:
-       print("Runnable URL (expires after %d seconds): \n%s" % (expiryTimeout, api_url + '?' + request_data))
+       print("Runnable URL (expires after %d seconds at %s): \n%s" % (expiryTimeout, args['expires'], api_url + '?' + request_data))
     else:
        print("Runnable URL: \n%s" % (api_url + '?' + request_data))
 
